@@ -2,6 +2,7 @@ import { Chat } from "./modules/Chat";
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowUpRight, Layers3, LogOut } from "lucide-react";
 import type { AuthState, Profile as UserProfile } from "../shared/types";
+import { BubbleBackground } from "./components/BubbleBackground/BubbleBackground";
 import { MotionToggle } from "./components/Motion";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Button, cn, useConfirm } from "./components/ui";
@@ -88,6 +89,7 @@ export default function App() {
     return (
       <>
         <div className="ambient-bg" aria-hidden="true" />
+        <BubbleBackground />
         <div className="login-theme">
           <MotionToggle />
           <ThemeToggle />
@@ -123,6 +125,7 @@ export default function App() {
   return (
     <div className="app-shell">
       <div className="ambient-bg" aria-hidden="true" />
+      <BubbleBackground />
       <aside className="app-sidebar">
         <div className="brand-lockup">
           <Layers3 size={25} />

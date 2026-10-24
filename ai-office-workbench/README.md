@@ -1,6 +1,12 @@
 # AI 办公助手
 
-一个在本机运行的个人办公工作台，把写作、会议纪要、项目管理、文档分析和知识库放在同一个界面里。数据存在本地 SQLite，AI 功能通过 OpenAI 兼容的 Chat Completions 接口接入，可以换成任意支持该协议的模型服务。
+一个在本机运行的个人办公工作台，把写作、会议纪要、项目管理、文档分析和知识库放在同一个界面里。
+
+- **数据在自己的电脑上**：全部记录保存在本地 SQLite 文件，不需要注册账号、不联网也能用。
+- **AI 用自己的服务**：通过 OpenAI 兼容的 Chat Completions 接口接入，可以换成任意支持该协议的模型（云端服务或本机 Ollama 都可以）。
+- **AI 结果先出草稿**：模型生成的内容都先显示为可编辑草稿，确认后才写入记录，不会直接覆盖已有内容。
+
+当前版本 `0.1.0`，改动记录见 [`docs/更新说明.md`](./docs/更新说明.md)。
 
 ## 功能
 
@@ -13,20 +19,23 @@
 | 文档分析 | 导入 TXT / Markdown，AI 生成概述、关键要点和建议行动 |
 | 知识库 | 保存资料和标签，关键词检索；也可以让 AI 根据检索到的资料整理答案并标注来源 |
 | 操作日志 | 记录每次新增、修改、删除，可查看前后对比并回溯 |
-| 其他 | 单用户账号登录、个人资料、专注计时（倒计时 / 秒表）、日夜主题切换 |
-
-AI 生成的内容都先作为草稿显示，用户确认后才会写入记录，不会直接覆盖已有内容。
+| 时钟与计时 | 倒计时与秒表 |
+| 个人资料 | 昵称、邮箱、角色、简介 |
+| 外观 | 日夜主题切换（自底部向上揭幕过渡）、背景气泡与场景轮播、动效总开关 |
 
 ## 技术栈
 
-- 前端：React 19、TypeScript、Vite、Tailwind CSS 4
-- 后端：Node.js 24、Express 5、Zod（参数校验）
-- 数据库：Node.js 内置的 `node:sqlite`，不需要额外安装数据库服务
-- 测试：`node:test` 单元测试，Playwright 端到端测试
+| 层次 | 选型 |
+| --- | --- |
+| 前端 | React 19、TypeScript、Vite 6、Tailwind CSS 4 |
+| 后端 | Node.js 24、Express 5、Zod（参数校验） |
+| 数据库 | Node.js 内置的 `node:sqlite`，不需要额外安装数据库服务 |
+| 测试 | `node:test` 单元测试（26 组）、Playwright 端到端测试（5 组） |
+| 界面动效 | 原生 Canvas、View Transitions API、CSS 遮罩动画，无额外动画库 |
 
 ## 运行
 
-需要 Node.js 24 或更高版本。完整的安装、备份、升级和常见问题见 `docs/安装与使用.md`。
+需要 Node.js 24 或更高版本（`node:sqlite` 依赖 24+）。完整的安装、备份、升级和常见问题见 [`docs/安装与使用.md`](./docs/安装与使用.md)。
 
 ```sh
 npm ci
@@ -44,13 +53,15 @@ npm start
 
 进入「设置」页，填写：
 
-- API 地址：服务商提供的基础地址，一般以 `/v1` 结尾，例如 `https://api.openai.com/v1`（不要带 `/chat/completions`）
-- 模型名称：服务商给出的模型 ID
-- API Key
+| 项目 | 说明 |
+| --- | --- |
+| API 地址 | 服务商提供的基础地址，一般以 `/v1` 结尾，例如 `https://api.openai.com/v1`（不要带 `/chat/completions`） |
+| 模型名称 | 服务商给出的模型 ID |
+| API Key | 服务商后台申请的密钥 |
 
 点「保存并测试连接」会发一条很短的请求确认配置可用。
 
-API Key 只保存在后端进程的内存里，不写入数据库、日志或浏览器，重启服务后需要重新填写；API 地址和模型名称会保存。没有配置 AI 时，各模块的手动记录功能照常可用。
+API Key 只保存在后端进程的内存里，不写入数据库、日志或浏览器，**每次重启服务后需要重新填写**；API 地址和模型名称会保存。没有配置 AI 时，各模块的手动记录功能照常可用。
 
 ## 演示模式
 
@@ -63,29 +74,44 @@ npm run build:preview
 ## 目录结构
 
 ```
-server/            后端
-  index.ts         启动入口
-  app.ts           HTTP 接口与参数校验
-  auth.ts          账号、登录、会话
-  db.ts            SQLite 读写、事务、操作日志
-  ai.ts            调用模型接口、错误处理、写作 / 知识库 / 问答提示词
-  office-prompts.ts  会议 / 项目 / 文档三个模块的提示词
-shared/            前后端共用
-  types.ts         数据类型
-  ai-schemas.ts    AI 请求与返回的 JSON 结构校验
-  chat.ts          AI 问答的对话格式校验
-  audit.ts         操作日志的差异计算与回溯
-  knowledge.ts     知识库关键词检索
-  timer.ts         计时器计算
-src/               前端
-  App.tsx          页面框架与导航
-  config.ts        站点名称、导航菜单
-  modules/         各功能页面
-  components/      通用组件（表单、确认框、编辑布局、动效等）
-  lib/             接口请求、编辑状态、演示模式数据
-  style.css        全局样式与主题
-tests/             单元测试和端到端测试
-docs/              交付说明、安装使用、系统设计、接口、案例与验收清单
+server/                    后端（Express，只监听 127.0.0.1）
+  index.ts                 启动入口：Node 版本检查、打开数据库、监听端口
+  app.ts                   HTTP 接口、参数校验、AI 互斥、统一错误处理
+  auth.ts                  账号、登录、会话、失败锁定、个人资料
+  db.ts                    SQLite 建表、读写、事务与操作日志、回溯
+  ai.ts                    调用模型接口、超时与错误转换、写作 / 知识库 / 问答提示词
+  office-prompts.ts        会议 / 项目 / 文档三个模块的提示词
+shared/                    前后端共用
+  types.ts                 数据类型
+  ai-schemas.ts            AI 请求与返回的 JSON 结构校验
+  chat.ts                  问答的对话格式校验
+  audit.ts                 操作日志的差异计算与回溯
+  knowledge.ts             知识库关键词检索
+  timer.ts                 计时器计算
+src/                       前端
+  main.tsx                 挂载入口
+  App.tsx                  页面框架、导航、未保存离开确认
+  config.ts                站点名称、导航菜单
+  style.css                全局样式、主题与动效样式
+  modules/                 各功能页面，每个模块一个文件
+  components/
+    ui.tsx                 按钮、空状态、提示、确认框等基础组件
+    BubbleBackground/      背景气泡特效（Canvas）
+    SceneCarousel.tsx      场景背景轮播
+    LightFrame.tsx         卡片边缘流光装饰
+    Motion.tsx             动效总开关
+    ThemeToggle.tsx        日夜主题切换按钮
+    Workspace.tsx          列表 + 编辑表单的通用骨架
+  lib/
+    api.ts                 接口请求
+    editor.tsx             「列表 + 编辑表单」通用状态
+    preview.ts             演示模式下的本地存储模拟接口
+    themeTransition.ts     主题切换的向上揭幕过渡
+    useBusy.ts             异步操作期间的忙碌状态
+    runtime.ts             运行环境标记
+public/                    静态资源（主题预加载脚本、场景图片）
+tests/                     单元测试与端到端测试
+docs/                      交付说明、安装使用、系统设计、接口、案例与验收清单
 ```
 
 ## 数据与备份
@@ -97,9 +123,9 @@ docs/              交付说明、安装使用、系统设计、接口、案例�
 ## 测试
 
 ```sh
-npm test          # 单元测试
+npm test          # 26 组单元测试
 npm run check     # 单元测试 + 类型检查 + 构建
-npm run test:e2e  # 端到端测试，需要安装 Google Chrome
+npm run test:e2e  # 5 组端到端测试，需要安装 Google Chrome
 ```
 
 测试使用临时数据库和本地模拟的模型服务，不会调用真实 AI，也不会改动 `data/` 里的数据。端到端测试的截图保存在 `test-results/`。
@@ -108,10 +134,10 @@ npm run test:e2e  # 端到端测试，需要安装 Google Chrome
 
 | 文档 | 内容 |
 | --- | --- |
-| docs/毕设交付说明.md | 交付内容、运行环境、功能范围、当前验收状态 |
-| docs/安装与使用.md | 安装、模型配置、模块操作、备份恢复、升级、常见问题 |
-| docs/系统设计.md | 架构、模块关系、数据库、请求流程、认证与错误处理 |
-| docs/API.md | 接口说明 |
-| docs/演示案例.md | 六个 AI 入口的演示案例 |
-| docs/验收清单.md | 逐项验收表与已知限制 |
-| docs/更新说明.md | 本版改动与升级方法 |
+| [`docs/毕设交付说明.md`](./docs/毕设交付说明.md) | 交付内容、运行环境、功能范围、当前验收状态 |
+| [`docs/安装与使用.md`](./docs/安装与使用.md) | 安装、模型配置、模块操作、备份恢复、升级、常见问题 |
+| [`docs/系统设计.md`](./docs/系统设计.md) | 架构、模块关系、数据库、请求流程、认证与错误处理 |
+| [`docs/API.md`](./docs/API.md) | 全部接口说明 |
+| [`docs/演示案例.md`](./docs/演示案例.md) | 六个 AI 入口的演示案例与检查要点 |
+| [`docs/验收清单.md`](./docs/验收清单.md) | 逐项验收表与已知限制 |
+| [`docs/更新说明.md`](./docs/更新说明.md) | 版本更新日志与升级方法 |

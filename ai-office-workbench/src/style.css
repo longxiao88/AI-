@@ -1851,6 +1851,15 @@ select:focus-visible {
   pointer-events: none;
   overflow: hidden;
 }
+/* 背景气泡特效：与光晕同层，靠 DOM 顺序叠在光晕之上、页面内容之下 */
+.bubble-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
 .ambient-bg::before,
 .ambient-bg::after {
   content: "";
@@ -1923,4 +1932,34 @@ body {
 }
 .login-theme {
   z-index: 2;
+}
+
+/* ========== 主题切换：新主题从底部升起，擦过整屏 ========== */
+/* 关掉浏览器默认的交叉淡入，改由 JS 驱动 ::view-transition-new(root) 的遮罩位移揭幕。
+   旧主题留在下面保持不动，新主题作为上层被自下而上揭开。
+
+   遮罩不是硬边裁切，而是一张「下半段实心、上沿羽化」的渐变图：
+     mask-size 纵向放大到视口的 2 倍，其中 38%→50% 是羽化带（约合视口高度的 24%），
+     50% 往下是实心——把它的 mask-position 从下方一路推到上方，
+     新主题就带着一条柔和的过渡带升上来，不会出现生硬的黑白分界线。
+   遮罩默认值停在「完全揭开」状态：万一 JS 动画没跑起来，也只是退化成瞬时切换。
+   这些伪元素只在切换的几百毫秒内存在，平常不点击切换主题时页面没有任何额外元素。 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+  mask-image: linear-gradient(to bottom, transparent 38%, #000 50%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 38%, #000 50%);
+  mask-size: 100% 200%;
+  -webkit-mask-size: 100% 200%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: 50% 100%;
+  -webkit-mask-position: 50% 100%;
 }

@@ -1,0 +1,37 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-preview/
+dist-share/
+
+# 运行时数据：数据库与备份，第一次启动自动创建
+data/
+
+# SMTP 授权码的加密密钥：与数据库同目录，绝不能进版本库
+.mail-key
+*.mail-key
+
+# 测试产物
+test-results/
+
+# 本地工作区数据（改动备份、记忆文件等），不属于项目源码
+.workbuddy/
+
+# 本地配置与密钥
+.env
+.env.local
+
+# 编辑器 / 系统
+# .idea/ 是 JetBrains 本地配置：整个目录忽略，但允许提交代码风格与模块声明
+.idea/*
+!.idea/.gitignore
+!.idea/codeStyles/
+!.idea/modules.xml
+!.idea/*.iml
+.vscode/
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db

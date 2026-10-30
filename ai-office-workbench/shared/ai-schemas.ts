@@ -50,11 +50,33 @@ export const documentResultSchema = z
   })
   .strict();
 
+// 工程导图：树状结构，中心主题 + 递归子节点。z.lazy 支持任意层级。
+export type MindmapNode = {
+  text: string;
+  children: MindmapNode[];
+};
+
+export const mindmapNodeSchema: z.ZodType<MindmapNode> = z.lazy(() =>
+  z.object({
+    text: z.string().trim().min(1).max(120),
+    children: z.array(mindmapNodeSchema).max(12),
+  }),
+);
+
+export const mindmapResultSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120),
+    root: mindmapNodeSchema,
+  })
+  .strict();
+
 export type MeetingResult = z.infer<typeof meetingResultSchema>;
 
 export type ProjectResult = z.infer<typeof projectResultSchema>;
 
 export type DocumentResult = z.infer<typeof documentResultSchema>;
+
+export type MindmapResult = z.infer<typeof mindmapResultSchema>;
 
 /**
  * 解析模型返回的 JSON。允许外面包一层 ```json 代码块（不少模型习惯这样输出），

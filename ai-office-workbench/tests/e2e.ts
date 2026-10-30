@@ -161,7 +161,7 @@ try {
   await valueIs(page.getByLabel("重点与结论", { exact: true }), "修改后的结论");
   checks.push("会议新增、修改、首页最近记录重新打开");
   await nav("项目管理");
-  await page.getByLabel("标题", { exact: true }).fill("毕业设计演示");
+  await page.getByLabel("标题", { exact: true }).fill("竞赛项目演示");
   await page.getByLabel("项目说明", { exact: true }).fill("先完成框架，再补充功能");
   await save();
   await page.getByLabel("新任务", { exact: true }).fill("检查所有页面");
@@ -244,7 +244,7 @@ try {
     ["AI 写作", "测试文稿"],
     ["会议纪要", "需求讨论"],
     ["文档分析", "资料"],
-    ["项目管理", "毕业设计演示"],
+    ["项目管理", "竞赛项目演示"],
   ]) {
     await nav(name);
     await page.locator("aside.panel").getByRole("button", { name: title, exact: false }).click();
@@ -252,7 +252,7 @@ try {
     await confirm();
     await page.getByRole("status").filter({ hasText: "记录已删除" }).waitFor();
   }
-  assert.equal(store.list().length, 0);
+  assert.equal(store.list("browser").length, 0);
   assert.equal(store.db.prepare("SELECT COUNT(*) as count FROM tasks").get()?.count, 0);
   checks.push("四模块删除、项目任务连动清除；浏览器无密钥存储");
   assert.deepEqual(errors, []);

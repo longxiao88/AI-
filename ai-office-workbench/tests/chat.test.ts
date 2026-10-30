@@ -20,7 +20,7 @@ async function harness(options: Parameters<typeof createApp>[1] = {}, dbPath = "
     return { status: response.status, body: await response.json() };
   };
   const session = await call("/auth/session");
-  await call(session.body.setupRequired ? "/auth/setup" : "/auth/login", "POST", {
+  await call(session.body.accounts.length === 0 ? "/auth/setup" : "/auth/login", "POST", {
     username: "tester",
     password: "TestPassword123",
   });
@@ -104,8 +104,8 @@ test("chat auth, missing key, context forwarding, errors and no persistence", as
     status = 200;
     assert.equal((await h.call("/ai/chat", "POST", q)).status, 200);
     assert.equal(calls, 3);
-    assert.equal(h.store.history().length, 0);
-    assert.equal(h.store.list().length, 0);
+    assert.equal(h.store.history("tester").length, 0);
+    assert.equal(h.store.list("tester").length, 0);
     assert.ok(!JSON.stringify((await h.call("/settings")).body).includes("secret"));
   } finally {
     await h.close();

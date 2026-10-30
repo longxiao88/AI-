@@ -12,11 +12,6 @@ mkdirSync(evidence, { recursive: true });
 const store = createStore(join(dir, "test.sqlite"));
 let providerStatus = 200;
 const answer = "【隔离测试】这是问答结果。";
-const unused = JSON.stringify({
-  overview: "【隔离测试】文档说明了四模块框架与交付节奏。",
-  keyPoints: ["【隔离测试】框架已搭建", "【隔离测试】功能待完善"],
-  actions: ["【隔离测试】收集反馈", "【隔离测试】安排验收"],
-});
 const provider = createServer(async (req, res) => {
   for await (const _ of req) {
   }
@@ -43,9 +38,6 @@ const errors: string[] = [];
 page.on("pageerror", (e) => errors.push(e.message));
 const nav = async (name: string) => {
   await page.getByRole("navigation").getByRole("button", { name, exact: true }).click();
-};
-const confirm = async () => {
-  await page.getByRole("alertdialog").getByRole("button", { name: "确认", exact: true }).click();
 };
 try {
   await page.goto(base);
@@ -85,7 +77,7 @@ try {
   await page.screenshot({ path: join(evidence, "chat-mobile.png"), fullPage: true });
   await page.getByRole("button", { name: "新对话", exact: true }).click();
   await page.getByRole("alertdialog").waitFor();
-  assert.equal(store.list().length, 0);
+  assert.equal(store.list("chatuser").length, 0);
   assert.deepEqual(errors, []);
   writeFileSync(
     join(evidence, "chat-browser-report.json"),

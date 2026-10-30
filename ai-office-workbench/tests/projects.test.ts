@@ -24,7 +24,7 @@ async function harness(options: Parameters<typeof createApp>[1] = {}, dbPath = "
     return { status: response.status, body: await response.json() };
   };
   const session = await call("/auth/session");
-  await call(session.body.setupRequired ? "/auth/setup" : "/auth/login", "POST", {
+  await call(session.body.accounts.length === 0 ? "/auth/setup" : "/auth/login", "POST", {
     username: "tester",
     password: "TestPassword123",
   });
@@ -154,8 +154,8 @@ test("project AI contract: fenced ok, invalid rejected 502, duplicates removed, 
       description: "说明",
     });
     assert.deepEqual(result.body.tasks, [{ title: "重复" }, { title: "唯一" }]);
-    assert.equal(dupes.store.list().length, 0);
-    assert.equal(dupes.store.history().length, 0);
+    assert.equal(dupes.store.list("tester").length, 0);
+    assert.equal(dupes.store.history("tester").length, 0);
     let seen: any = null;
     const spy = await configured({
       fetcher: (async (_url, init) => {
@@ -187,7 +187,7 @@ test("task batch: atomic single log, idempotent replay, conflict 409, restart an
   try {
     const project = await h.makeProject();
     const writing = (await h.call("/entries/writing", "POST", { title: "文稿", data: {} })).body.id;
-    const logsBefore = h.store.history().length;
+    const logsBefore = h.store.history("tester").length;
     assert.equal(
       (
         await h.call(`/projects/${writing}/tasks/batch`, "POST", {
@@ -230,7 +230,7 @@ test("task batch: atomic single log, idempotent replay, conflict 409, restart an
     assert.equal(created.body.replayed, false);
     assert.equal(created.body.tasks.length, 3);
     assert.ok(created.body.tasks.every((t: any) => t.status === "todo"));
-    assert.equal(h.store.history().length, logsBefore + 1);
+    assert.equal(h.store.history("tester").length, logsBefore + 1);
     const replay = await h.call(`/projects/${project}/tasks/batch`, "POST", {
       requestId: "r-batch-1",
       tasks: [{ title: "第一步" }, { title: "第二步" }, { title: "第三步" }],
@@ -241,7 +241,7 @@ test("task batch: atomic single log, idempotent replay, conflict 409, restart an
       replay.body.tasks.map((t: any) => t.id),
       created.body.tasks.map((t: any) => t.id),
     );
-    assert.equal(h.store.history().length, logsBefore + 1);
+    assert.equal(h.store.history("tester").length, logsBefore + 1);
     assert.equal(
       (
         await h.call(`/projects/${project}/tasks/batch`, "POST", {
@@ -261,7 +261,7 @@ test("task batch: atomic single log, idempotent replay, conflict 409, restart an
     assert.equal(afterRestart.status, 200);
     assert.equal(afterRestart.body.replayed, true);
     assert.equal((await h.call(`/projects/${project}/tasks`)).body.length, 3);
-    const log = h.store.history().find((l) => l.changes.some((c) => c.table === "tasks"));
+    const log = h.store.history("tester").find((l) => l.changes.some((c) => c.table === "tasks"));
     assert.ok(log);
     await h.call(`/history/${log!.id}/restore`, "POST");
     assert.equal((await h.call(`/projects/${project}/tasks`)).body.length, 0);

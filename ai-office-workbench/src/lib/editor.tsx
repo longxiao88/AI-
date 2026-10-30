@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { ContentData, Entry, Kind } from "../../shared/types";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Entry, Kind, KindDataMap } from "../../shared/types";
 import { useConfirm } from "../components/ui";
 import { api, message } from "./api";
 import { isPreview } from "./runtime";
@@ -14,27 +14,37 @@ export interface ModuleProps {
 /**
  * 通用的「列表 + 编辑表单」状态：读取列表、切换记录、保存、删除，
  * 并在内容有改动时通过 onDirty 通知外层，离开页面前会提示。
+ *
+ * 泛型 K 绑定模块类型，因此 defaults 与 data 都是该模块专属结构，
+ * 写错字段名会在编译期报错。
  */
-export function useEditor(
-  kind: Kind,
-  defaults: ContentData,
+export function useEditor<K extends Kind>(
+  kind: K,
+  defaults: KindDataMap[K],
   onDirty: (value: boolean) => void,
   initialId?: string,
 ) {
   const [items, setItems] = useState<Entry[]>([]);
   const [current, setCurrent] = useState<Entry | null>(null);
   const [title, setTitle] = useState("");
-  const [data, setData] = useState<ContentData>(defaults);
+  const [data, setData] = useState<KindDataMap[K]>(defaults);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const confirm = useConfirm();
 
-  const saved = current
-    ? { title: current.title, data: current.data }
-    : { title: "", data: defaults };
-  const dirty = JSON.stringify({ title, data }) !== JSON.stringify(saved);
+  // 各页面把 defaults 写成内联对象，每次渲染都是新引用。
+  // 这里固定首次传入的那一份，避免脏检查的 useMemo 每次都失效。
+  const initial = useRef(defaults).current;
+
+  // 只在标题或正文真正变化时序列化；切换 loading、提示语等无关状态不会重复计算。
+  const dirty = useMemo(() => {
+    const saved = current
+      ? { title: current.title, data: current.data }
+      : { title: "", data: initial };
+    return JSON.stringify({ title, data }) !== JSON.stringify(saved);
+  }, [title, data, current, initial]);
 
   useEffect(() => {
     onDirty(dirty);
@@ -59,11 +69,12 @@ export function useEditor(
   function load(item: Entry | null) {
     setCurrent(item);
     setTitle(item?.title || "");
-    setData(item?.data || defaults);
+    // 列表来自按 kind 过滤的接口，data 结构与 K 一致，这里的断言是安全的
+    setData((item?.data as KindDataMap[K]) || initial);
   }
 
-  const patch = (key: keyof ContentData, value: string) =>
-    setData((previous) => ({ ...previous, [key]: value }));
+  const patch = (key: keyof KindDataMap[K] & string, value: string) =>
+    setData((previous) => ({ ...previous, [key]: value }) as KindDataMap[K]);
 
   async function select(item: Entry | null) {
     if (dirty && !(await confirm("当前内容尚未保存，确认放弃修改并切换吗？"))) return false;
@@ -138,4 +149,20 @@ export function useEditor(
   };
 }
 
-export type Editor = ReturnType<typeof useEditor>;
+type Editor<K extends Kind = Kind> = ReturnType<typeof useEditor<K>>;
+
+/** Workspace 骨架只需要这些与模块类型无关的字段（不碰 data / patch） */
+export type WorkspaceEditor = Pick<
+  Editor<Kind>,
+  | "items"
+  | "current"
+  | "title"
+  | "setTitle"
+  | "loading"
+  | "saving"
+  | "select"
+  | "save"
+  | "remove"
+  | "error"
+  | "success"
+>;

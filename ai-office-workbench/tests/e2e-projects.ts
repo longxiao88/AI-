@@ -85,7 +85,7 @@ try {
   await page.getByRole("alert").filter({ hasText: "请先保存项目" }).waitFor();
   checks.push("项目未保存时提示先保存");
   await save();
-  const logsBefore = store.history().length;
+  const logsBefore = store.history("projects").length;
   await page.getByRole("button", { name: "生成任务草稿", exact: true }).click();
   const generating = page.getByRole("button", {
     name: "正在生成草稿，请稍候…",
@@ -95,7 +95,7 @@ try {
   assert.equal(await generating.isDisabled(), true);
   assert.equal(await page.getByRole("button", { name: "保存", exact: true }).isDisabled(), true);
   await page.getByRole("status").filter({ hasText: "任务草稿已生成" }).waitFor();
-  assert.equal(store.history().length, logsBefore);
+  assert.equal(store.history("projects").length, logsBefore);
   await page.screenshot({
     path: join(outDir, "projects-ai-draft.png"),
     fullPage: true,
@@ -107,7 +107,7 @@ try {
   await page.getByRole("button", { name: /确认加入所选（2）/ }).click();
   await page.getByRole("alert").filter({ hasText: "请先保存或取消正在编辑的任务" }).waitFor();
   assert.equal(await page.getByLabel("新任务", { exact: true }).inputValue(), "尚未保存的手动任务");
-  assert.equal(store.history().length, logsBefore);
+  assert.equal(store.history("projects").length, logsBefore);
   await page.getByLabel("新任务", { exact: true }).fill("");
   checks.push("手动任务未保存时阻止加入草稿，保留输入且不写库");
   await page.getByRole("button", { name: /确认加入所选（2）/ }).click();
@@ -115,14 +115,14 @@ try {
   await page.getByText("【测试】梳理需求（已确认）").waitFor();
   await page.getByText("【测试】搭建页面").waitFor();
   assert.equal(await page.getByText("【测试】编写测试").count(), 0);
-  assert.equal(store.history().length, logsBefore + 1);
-  assert.equal(store.tasks(store.list("projects")[0].id).length, 2);
+  assert.equal(store.history("projects").length, logsBefore + 1);
+  assert.equal(store.tasks("projects", store.list("projects", "projects")[0].id).length, 2);
   checks.push("编辑草稿、取消勾选、确认加入两条、产生一条日志");
   await page.getByRole("button", { name: "生成任务草稿", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "任务草稿已生成" }).waitFor();
   await page.getByRole("button", { name: "放弃草稿", exact: true }).click();
   assert.equal(await page.getByText("AI 任务草稿（未加入）").count(), 0);
-  assert.equal(store.tasks(store.list("projects")[0].id).length, 2);
+  assert.equal(store.tasks("projects", store.list("projects", "projects")[0].id).length, 2);
   checks.push("放弃草稿不改变任务列表");
   providerStatus = 401;
   await page.getByRole("button", { name: "生成任务草稿", exact: true }).click();
@@ -131,7 +131,7 @@ try {
     await page.getByLabel("项目说明", { exact: true }).inputValue(),
     "把现有页面拆成可独立交付的模块。",
   );
-  assert.equal(store.history().length, logsBefore + 1);
+  assert.equal(store.history("projects").length, logsBefore + 1);
   providerStatus = 200;
   checks.push("401 失败保留说明与任务，不产生日志");
   await page.setViewportSize({ width: 390, height: 844 });

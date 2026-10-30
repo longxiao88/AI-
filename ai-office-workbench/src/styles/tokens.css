@@ -1,0 +1,64 @@
+/* ========== 主题色与页面布局（默认夜间） ========== */
+@theme {
+  --color-white: #111b2d;
+  --color-slate-50: #0b1423;
+  --color-slate-100: #152238;
+  --color-slate-200: #26364c;
+  --color-slate-300: #354960;
+  --color-slate-400: #8397b1;
+  --color-slate-500: #9babbe;
+  --color-slate-600: #b5c5da;
+  --color-slate-700: #d4e0f1;
+  --color-slate-800: #e8effb;
+  --color-blue-50: #102b3d;
+  --color-blue-100: #163d52;
+  --color-blue-200: #2d536e;
+  --color-blue-300: #6bc9ed;
+  --color-blue-600: #64cbee;
+  --color-blue-700: #9adff6;
+  --color-blue-800: #c4edff;
+  --color-red-50: #301b27;
+  --color-red-200: #674052;
+  --color-red-700: #ffacc0;
+}
+:root {
+  color-scheme: dark;
+  background: var(--theme-surface, #080e1a);
+  color: var(--theme-ink, #e8effb);
+  --surface: #111b2d;
+  --line: #26364c;
+  --muted: #9babbe;
+  --accent: #64cbee;
+}
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  background: var(--theme-surface, #080e1a);
+}
+.btn {
+  min-height: 44px;
+}
+.btn-primary {
+  color: var(--theme-ink, #061421);
+  font-weight: 650;
+}
+.panel {
+  border-radius: 14px;
+}
+input,
+select {
+  min-height: 44px;
+}
+.eyebrow {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+  color: var(--theme-ink, #83a9c8);
+  line-height: 1.8;
+}
+.status-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+}

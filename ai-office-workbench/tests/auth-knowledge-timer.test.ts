@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { searchKnowledge } from "../shared/knowledge.js";
 import { timerValue, formatDuration, type TimerState } from "../shared/timer.js";
 import { createApp } from "../server/app.js";
 import { createStore } from "../server/db.js";
 
 test("account setup, login gate, durable profile, logout invalidates session, legacy records retained", async () => {
   const store = createStore(":memory:");
-  store.save("writing", "旧文稿", { input: "已有数据" });
+  // 旧版单账号数据（未迁移时通过首个账号 setup 归入该账号）
+  store.save("tester", "writing", "旧文稿", { input: "已有数据" });
   const server = createApp(store).listen(0, "127.0.0.1");
   await new Promise<void>((r) => server.once("listening", r));
   const base = `http://127.0.0.1:${(server.address() as any).port}/api`;
@@ -26,7 +26,7 @@ test("account setup, login gate, durable profile, logout invalidates session, le
   };
   try {
     assert.equal((await call("/entries")).status, 401);
-    assert.equal((await call("/auth/session")).body.setupRequired, true);
+    assert.deepEqual((await call("/auth/session")).body.accounts, []);
     const setup = await call("/auth/setup", "POST", {
       username: "tester",
       password: "SafePass123",
@@ -35,16 +35,30 @@ test("account setup, login gate, durable profile, logout invalidates session, le
     assert.equal(setup.status, 201);
     assert.match(setup.headers.get("set-cookie")!, /HttpOnly/);
     assert.match(setup.headers.get("set-cookie")!, /SameSite=Strict/);
+    // 迁移后旧数据归入首个账号
     assert.equal((await call("/entries")).body[0].title, "旧文稿");
+    // 多账号：允许注册第二个账号
+    const second = await call("/auth/setup", "POST", {
+      username: "second",
+      password: "AnotherPass123",
+    });
+    assert.equal(second.status, 201);
+    // 但第二个账号看不到 tester 的数据
+    assert.equal((await call("/entries")).body.length, 0);
+    // 重复注册同名账号被拒绝
     assert.equal(
       (
         await call("/auth/setup", "POST", {
           username: "second",
-          password: "AnotherPass123",
+          password: "Whatever123",
         })
       ).status,
       409,
     );
+    // 切回 tester 账号验证数据隔离
+    await call("/auth/login", "POST", { username: "tester", password: "SafePass123" });
+    assert.equal((await call("/entries")).body[0].title, "旧文稿");
+
     const updated = await call("/profile", "PUT", {
       name: "新名字",
       email: "user@example.com",
@@ -86,11 +100,11 @@ test("account setup, login gate, durable profile, logout invalidates session, le
 });
 test("knowledge keyword retrieval and sourced AI prompt, no hit prevents external call", async () => {
   const store = createStore(":memory:");
-  store.save("knowledge", "交付流程", {
+  store.save("tester", "knowledge", "交付流程", {
     keywords: "交付 验收",
     source: "先自测，再让客户验收。",
   });
-  store.save("writing", "不应检索", { source: "交付" });
+  store.save("tester", "writing", "不应检索", { source: "交付" });
   let calls = 0;
   let prompt = "";
   const app = createApp(store, {

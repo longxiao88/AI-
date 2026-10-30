@@ -1,6 +1,7 @@
-import { Copy, Download, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, Copy, Download, Sparkles } from "lucide-react";
 import type { Mode } from "../../shared/types";
-import { Button, Field, useConfirm } from "../components/ui";
+import { Button, Field, Notice, useConfirm } from "../components/ui";
 import { Workspace } from "../components/Workspace";
 import { modeNames } from "../config";
 import { api, message } from "../lib/api";
@@ -11,6 +12,31 @@ export function Writing({ onDirty, onBusy, initialId }: ModuleProps) {
   const e = useEditor("writing", { mode: "compose", input: "", output: "" }, onDirty, initialId);
   const [busy, runAi] = useBusy(onBusy);
   const confirm = useConfirm();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  /** 把写作结果一键存为知识库条目，之后可参与检索问答。 */
+  async function saveToKnowledge() {
+    if (saving || busy) return;
+    const content = (e.data.output || "").trim();
+    if (!content) return e.setError("写作结果还是空的，请先生成或填写内容。");
+    if (e.data.output && !(await confirm("确认把当前写作结果保存为一条知识库条目吗？"))) return;
+
+    setSaving(true);
+    setSaveError("");
+    e.setError("");
+    try {
+      await api(`/entries/knowledge`, "POST", {
+        title: (e.title || "写作结果").trim() || "写作结果",
+        data: { source: content, keywords: "" },
+      });
+      e.setSuccess("已存入知识库，之后可在知识库中检索或问答。");
+    } catch (err) {
+      setSaveError(message(err));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function generate() {
     if (busy) return;
@@ -118,7 +144,15 @@ export function Writing({ onDirty, onBusy, initialId }: ModuleProps) {
               <Download size={15} />
               导出 TXT
             </Button>
+            <Button
+              disabled={!e.data.output || busy || saving}
+              onClick={() => void saveToKnowledge()}
+            >
+              <BookOpen size={15} />
+              {saving ? "存入中…" : "存入知识库"}
+            </Button>
           </div>
+          <Notice error={saveError} />
         </div>
       </div>
     </Workspace>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Copy, Download, MessageSquare, Plus } from "lucide-react";
+import { Send, Copy, Download, MessageSquare, Plus, Save } from "lucide-react";
 import { chatInputSchema, type ChatMessage } from "../../shared/chat";
 import { api, message } from "../lib/api";
 import { isPreview } from "../lib/runtime";
@@ -18,6 +18,7 @@ export function Chat({
   const pending = useRef(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [saving, setSaving] = useState(false);
   const confirm = useConfirm();
 
   // 有输入或已有对话时，切换页面前提醒
@@ -28,6 +29,28 @@ export function Chat({
   const transcript = messages
     .map((m) => `${m.role === "user" ? "我" : "AI"}：\n${m.content}`)
     .join("\n\n");
+
+  /** 把当前对话存为一条知识库条目，方便之后检索回溯。 */
+  async function saveTranscript() {
+    if (saving || busy) return;
+    if (!messages.length) return setError("当前没有对话内容可保存。");
+    if (!(await confirm("确认把整段对话保存为一条知识库条目吗？"))) return;
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      await api(`/entries/knowledge`, "POST", {
+        title: `问答 ${new Date().toLocaleDateString("zh-CN")}`,
+        data: { source: transcript, keywords: "问答记录" },
+      });
+      setSuccess("对话已存入知识库。");
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   /** 把整段对话发给后端；失败时保留已有对话和本次输入，不自动重试。 */
   async function send() {
@@ -105,6 +128,10 @@ export function Chat({
           <Button disabled={busy || !messages.length} onClick={download}>
             <Download size={15} />
             导出 TXT
+          </Button>
+          <Button disabled={busy || saving || !messages.length} onClick={() => void saveTranscript()}>
+            <Save size={15} />
+            {saving ? "保存中…" : "存入知识库"}
           </Button>
           <Button disabled={busy} onClick={() => void reset()}>
             <Plus size={15} />

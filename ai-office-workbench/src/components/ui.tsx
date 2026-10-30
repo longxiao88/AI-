@@ -39,20 +39,41 @@ export function Field({
   label,
   children,
   hint,
+  error,
 }: {
   label: string;
   children: ReactNode;
   hint?: string;
+  /** 该字段的校验提示；有值时标红输入框，并把提示排在标题右侧 */
+  error?: string;
 }) {
   const id = useId();
+  const describedBy = [error ? `${id}-error` : "", hint ? `${id}-hint` : ""]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className="grid gap-2 text-sm font-medium text-slate-700">
-      <label htmlFor={id}>{label}</label>
-      {cloneElement(children as ReactElement<{ id?: string; "aria-describedby"?: string }>, {
-        id,
-        "aria-describedby": hint ? `${id}-hint` : undefined,
-      })}
+    <div className={cn("field grid gap-2 text-sm font-medium text-slate-700", error && "is-invalid")}>
+      <span className="field-head">
+        <label htmlFor={id}>{label}</label>
+        {error && (
+          <em id={`${id}-error`} className="field-error" role="alert">
+            {error}
+          </em>
+        )}
+      </span>
+      {cloneElement(
+        children as ReactElement<{
+          id?: string;
+          "aria-describedby"?: string;
+          "aria-invalid"?: boolean;
+        }>,
+        {
+          id,
+          "aria-describedby": describedBy || undefined,
+          "aria-invalid": error ? true : undefined,
+        },
+      )}
       {hint && (
         <span id={`${id}-hint`} className="font-normal text-xs text-slate-500">
           {hint}
@@ -94,13 +115,23 @@ export function Empty({ text, action }: { text: string; action?: ReactNode }) {
   );
 }
 
-const ConfirmContext = createContext<(text: string) => Promise<boolean>>(async () => false);
+/** 确认框的可选文案，不传时沿用「确认操作 / 取消 / 确认」 */
+interface ConfirmOptions {
+  title?: string;
+  confirmText?: string;
+  cancelText?: string;
+}
+
+const ConfirmContext = createContext<(text: string, options?: ConfirmOptions) => Promise<boolean>>(
+  async () => false,
+);
 
 export const useConfirm = () => useContext(ConfirmContext);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<{
     text: string;
+    options?: ConfirmOptions;
     resolve: (value: boolean) => void;
   } | null>(null);
   const settle = (value: boolean) => {
@@ -110,24 +141,28 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConfirmContext.Provider
-      value={(text) => new Promise((resolve) => setPending({ text, resolve }))}
+      value={(text, options) => new Promise((resolve) => setPending({ text, options, resolve }))}
     >
       {children}
       <AlertDialog.Root open={!!pending}>
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 z-40 bg-slate-950/30" />
           <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
-            <AlertDialog.Title className="text-lg font-semibold">确认操作</AlertDialog.Title>
+            <AlertDialog.Title className="text-lg font-semibold">
+              {pending?.options?.title || "确认操作"}
+            </AlertDialog.Title>
             <AlertDialog.Description className="my-4 text-sm leading-7 text-slate-600">
               {pending?.text}
             </AlertDialog.Description>
             <div className="flex justify-end gap-3">
               <AlertDialog.Cancel asChild>
-                <Button onClick={() => settle(false)}>取消</Button>
+                <Button onClick={() => settle(false)}>
+                  {pending?.options?.cancelText || "取消"}
+                </Button>
               </AlertDialog.Cancel>
               <AlertDialog.Action asChild>
                 <Button variant="primary" onClick={() => settle(true)}>
-                  确认
+                  {pending?.options?.confirmText || "确认"}
                 </Button>
               </AlertDialog.Action>
             </div>

@@ -4,7 +4,6 @@ node_modules/
 # 构建产物
 dist/
 dist-preview/
-dist-share/
 
 # 运行时数据：数据库与备份，第一次启动自动创建
 data/
@@ -15,6 +14,9 @@ data/
 
 # 测试产物
 test-results/
+
+# 分享用的打包输出
+dist-share/
 
 # 本地工作区数据（改动备份、记忆文件等），不属于项目源码
 .workbuddy/

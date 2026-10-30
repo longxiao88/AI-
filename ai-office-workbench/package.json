@@ -1,19 +1,20 @@
 {
   "name": "ai-office-workbench",
-  "version": "0.1.0",
+  "version": "0.4.3",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite\"",
+    "dev": "concurrently -k \"tsx watch --experimental-sqlite server/index.ts\" \"vite\"",
     "build": "tsc --noEmit && vite build",
     "build:preview": "tsc --noEmit && vite build --mode preview --outDir dist-preview",
-    "start": "tsx server/index.ts",
+    "start": "tsx --experimental-sqlite server/index.ts",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "npm run build && tsx tests/e2e.ts && tsx tests/e2e-meetings.ts && tsx tests/e2e-projects.ts && tsx tests/e2e-documents.ts && tsx tests/e2e-chat.ts",
     "check": "npm run test && npm run build",
+    "pack:share": "node scripts/pack.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -21,18 +22,25 @@
     "@tailwindcss/vite": "^4.1.0",
     "clsx": "^2.1.1",
     "express": "^5.1.0",
+    "jszip": "^3.10.2",
     "lucide-react": "^0.468.0",
+    "mammoth": "^1.13.0",
+    "multer": "^2.4.0",
+    "nodemailer": "^10.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.0",
     "tailwindcss": "^4.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/xlsx": "^0.0.35",
     "@vitejs/plugin-react": "^4.4.0",
     "concurrently": "^9.1.0",
     "playwright": "^1.51.0",

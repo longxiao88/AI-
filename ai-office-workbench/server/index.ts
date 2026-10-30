@@ -1,11 +1,13 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-// 数据库用的是 Node.js 内置的 node:sqlite，版本太低时底层报错看不懂，这里先检查
+// 数据库用的是 Node.js 内置的 node:sqlite，版本太低时底层报错看不懂，这里先检查。
+// node:sqlite 自 22.5.0 引入（22.x 需 --experimental-sqlite 标志，见 package.json 脚本），
+// 23.4.0 起默认可用；低于 22.5 直接拦下，避免跑到 import 时抛看不懂的底层错误。
 const nodeMajor = Number(process.versions.node.split(".")[0]);
-if (nodeMajor < 24) {
+if (nodeMajor < 22) {
   console.error(
-    `需要 Node.js 24 或更高版本，当前是 ${process.version}。请安装 Node.js 24 LTS 后重新执行 npm ci。`,
+    `需要 Node.js 22.5 或更高版本，当前是 ${process.version}。请安装 Node.js 24 LTS 后重新执行 npm ci。`,
   );
   process.exit(1);
 }

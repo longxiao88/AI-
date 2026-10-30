@@ -10,6 +10,8 @@ import {
   Timer,
   UserRound,
   History,
+  Search,
+  FolderOpen,
 } from "lucide-react";
 
 export const appName = "AI 办公助手";
@@ -20,6 +22,12 @@ export const navigation = [
     title: "工作台",
     icon: LayoutDashboard,
     description: "从一件小事开始，让工作更有条理。",
+  },
+  {
+    id: "search",
+    title: "全局搜索",
+    icon: Search,
+    description: "在一个地方，找到你写过的所有内容。",
   },
   {
     id: "chat",
@@ -56,6 +64,12 @@ export const navigation = [
     title: "知识库",
     icon: BookOpen,
     description: "积累你的资料，让每一次查找都有依据。",
+  },
+  {
+    id: "resources",
+    title: "资源库",
+    icon: FolderOpen,
+    description: "上传文件，在线预览，随时下载与理解。",
   },
   {
     id: "clock",

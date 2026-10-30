@@ -34,7 +34,7 @@ async function harness(options: Parameters<typeof createApp>[1] = {}, dbPath = "
     return { status: response.status, body: await response.json() };
   };
   const session = await call("/auth/session");
-  await call(session.body.setupRequired ? "/auth/setup" : "/auth/login", "POST", {
+  await call(session.body.accounts.length === 0 ? "/auth/setup" : "/auth/login", "POST", {
     username: "tester",
     password: "TestPassword123",
   });

@@ -17,6 +17,8 @@ function memory() {
 test("preview writes remain in visitor storage and survive reopening, all examples labelled", async () => {
   const storage = memory();
   const api = createPreviewApi(storage);
+  // 注册并登录演示账号，之后数据按账号隔离保存
+  await api("/auth/setup", "POST", { username: "demo", password: "password123", name: "演示" });
   const rows = await api<Entry[]>("/entries");
   assert.equal(rows.length, 5);
   assert.ok(rows.every((e) => e.title.startsWith("示例")));
@@ -31,7 +33,7 @@ test("preview writes remain in visitor storage and survive reopening, all exampl
     });
     assert.equal(updated.title, "edited");
     const reopened = createPreviewApi(storage);
-    assert.equal((await reopened<Entry>(`/entries/${value.id}`)).data.notes, "saved");
+    assert.equal(((await reopened<Entry>(`/entries/${value.id}`)).data as { notes?: string }).notes, "saved");
     await api(`/entries/${value.id}`, "DELETE");
     await assert.rejects(() => api(`/entries/${value.id}`));
   }
@@ -49,10 +51,12 @@ test("preview writes remain in visitor storage and survive reopening, all exampl
   });
   assert.equal((await api<Task[]>(`/projects/${project.id}/tasks`))[0].status, "done");
   await api(`/entries/${project.id}`, "DELETE");
-  const saved = JSON.parse(storage.data.get("ai-office-preview-v1")!);
+  const saved = JSON.parse(storage.data.get("ai-office-preview-v2:demo")!);
   assert.ok(!saved.tasks.some((t: Task) => t.id === task.id));
   assert.ok(saved.history.some((log: any) => log.changes.some((c: any) => c.id === task.id)));
+  // 独立的存储实例（新访客）看不到 demo 账号的数据
   const second = createPreviewApi(memory());
+  await second("/auth/setup", "POST", { username: "other", password: "password123", name: "其他" });
   assert.equal((await second<Entry[]>("/entries")).length, 5);
 });
 test("preview rejects AI and key operations without storing secrets; no false success", async () => {

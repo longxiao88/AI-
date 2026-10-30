@@ -115,9 +115,9 @@ try {
     await page.getByLabel("待办事项", { exact: true }).inputValue(),
     "【测试】核对界面\n【测试】补充自动化测试",
   );
-  assert.equal(store.history().length, 0);
+  assert.equal(store.history("meetings").length, 0);
   await save();
-  assert.equal(store.history().length, 1);
+  assert.equal(store.history("meetings").length, 1);
   checks.push("编辑草稿后应用，生成与应用均不写库，保存产生一条日志");
   await page.getByRole("button", { name: "生成摘要草稿", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "摘要草稿已生成" }).waitFor();
@@ -136,9 +136,9 @@ try {
     await page.getByLabel("重点与结论", { exact: true }).inputValue(),
     "【测试】结论：按现有节奏交付，先完成会议模块。",
   );
-  assert.equal(store.history().length, 1);
+  assert.equal(store.history("meetings").length, 1);
   await save();
-  assert.equal(store.history().length, 2);
+  assert.equal(store.history("meetings").length, 2);
   checks.push("已有内容时应用需确认，替换后保存产生第二条日志");
   providerStatus = 401;
   await page.getByRole("button", { name: "生成摘要草稿", exact: true }).click();
@@ -151,7 +151,7 @@ try {
     await page.getByLabel("重点与结论", { exact: true }).inputValue(),
     "【测试】结论：按现有节奏交付，先完成会议模块。",
   );
-  assert.equal(store.history().length, 2);
+  assert.equal(store.history("meetings").length, 2);
   providerStatus = 200;
   checks.push("401 失败保留原文与已保存结果，不产生日志");
   await page.setViewportSize({ width: 390, height: 844 });

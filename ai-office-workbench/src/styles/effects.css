@@ -1,0 +1,490 @@
+/* ========== 动效：背景轮播、页面过渡、按钮光效 ==========
+   只用 transform / opacity 做动画，关闭动效或系统设置减少动态时全部停止。 */
+.app-main {
+  perspective: 1600px;
+}
+.page-stage {
+  transform-origin: 12% 15%;
+  animation: page-turn-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes page-turn-in {
+  from {
+    opacity: 0.2;
+    transform: translate3d(20px, 6px, 0) rotateY(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateY(0);
+  }
+}
+.btn,
+.tool-card,
+.nav-item,
+.theme-toggle,
+.motion-toggle {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn,
+.tool-card,
+.nav-item,
+.recent-row,
+.knowledge-shortcut {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn::after,
+.tool-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: -50% auto -50% -45%;
+  width: 35%;
+  background: linear-gradient(100deg, transparent, rgba(140, 220, 255, 0.2), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled)::after,
+  .tool-card:hover::after {
+    animation: button-glint 550ms ease-out both;
+  }
+  .tool-card:hover,
+  .knowledge-shortcut:hover {
+    transform: translateY(-5px);
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+  .nav-item:hover {
+    transform: translateX(3px);
+  }
+  .tool-card:hover .tool-card-bottom > svg,
+  .btn:hover > svg {
+    transform: translateX(3px);
+  }
+}
+.btn:active:not(:disabled),
+.tool-card:active {
+  transform: scale(0.98);
+}
+.btn > svg,
+.tool-card-bottom > svg {
+  transition: transform 180ms ease-out;
+}
+@keyframes button-glint {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(580%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+.pointer-spark {
+  position: fixed;
+  z-index: 60;
+  width: 22px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(100, 203, 238, 0.4);
+}
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.motion-toggle[aria-pressed="true"] {
+  color: var(--accent);
+}
+.login-theme {
+  display: flex;
+  gap: 8px;
+}
+.theme-toggle {
+  gap: 9px;
+}
+.theme-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 12px;
+  background: var(--line);
+}
+.theme-track i {
+  display: block;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 50%;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+[data-theme="light"] .theme-track i {
+  transform: translateX(14px);
+}
+.workspace-hero {
+  min-height: 380px;
+}
+.hero-copy {
+  padding-top: 38px;
+  padding-bottom: 55px;
+  max-width: 55%;
+  pointer-events: none;
+}
+.hero-copy button {
+  pointer-events: auto;
+}
+.hero-copy h2 {
+  letter-spacing: -0.025em;
+}
+.scene-carousel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+/* 视口就是滑动窗口：超出部分裁掉，横向手势交给 JS，纵向留给页面滚动 */
+.scene-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+.scene-viewport:active {
+  cursor: grabbing;
+}
+/* 两层叠放：下层是目标图，上层是当前图，靠遮罩擦除露出下层 */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* 提升为独立合成层，遮罩按帧重算时不牵连其它内容 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+}
+/* 渐变压到 200% 宽度：mask-position 0% 时整段落在实心区（全显），100% 时落在透明区（全隐） */
+.scene-layer-top {
+  /* 提前告诉浏览器这个属性会变，减少逐帧重算带来的卡顿 */
+  will-change: mask-position;
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.scene-layer-top.wipe-l {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to right, #000 0%, #000 50%, transparent 50%, transparent 100%);
+}
+.scene-layer-top.wipe-r {
+  -webkit-mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to left, #000 0%, #000 50%, transparent 50%, transparent 100%);
+}
+/*
+ * 首页：左侧渐隐放在「两层共同的父容器」上，而不是每张图自己。
+ * 如果加在 img 上，上层的左边缘会半透明，擦除时下层就从那里透出来——
+ * 看起来像两张图叠在一起。放在 viewport 上，两层一起被裁，彼此不会互透。
+ */
+.scene-carousel:not(.scene-login) .scene-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.32) 20%,
+    rgba(0, 0, 0, 0.68) 36%,
+    rgba(0, 0, 0, 0.92) 46%,
+    #000 55%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.32) 20%,
+    rgba(0, 0, 0, 0.68) 36%,
+    rgba(0, 0, 0, 0.92) 46%,
+    #000 55%,
+    #000 100%
+  );
+}
+.scene-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 50%;
+  /* 渐隐会让画面发灰，先把饱和度与对比度提上来抵消 */
+  filter: saturate(1.1) contrast(1.05);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.scene-caption {
+  position: absolute;
+  left: 26px;
+  bottom: 14px;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 9px;
+  font-size: 11px;
+  color: #dceaf7;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.scene-caption > span {
+  font: 10px/1.5 monospace;
+  color: #78cbe9;
+}
+.scene-caption strong {
+  font-weight: 500;
+}
+.scene-caption small {
+  grid-column: 1/-1;
+  font: 8px/1.5 monospace;
+  letter-spacing: 0.07em;
+  color: #87a9c7;
+}
+/* 指示器：底部居中，当前项拉伸成胶囊，其余是半透明圆点 */
+.scene-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.scene-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+[data-motion="off"] .scene-layer-top {
+  transition: none !important;
+}
+.scene-dot span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.32);
+  transition:
+    width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 320ms;
+}
+.scene-dot:hover span {
+  background: rgba(255, 255, 255, 0.55);
+}
+.scene-dot[aria-pressed="true"] span {
+  width: 22px;
+  background: #fff;
+}
+.scene-login .scene-viewport {
+  inset: 0;
+}
+/* 登录页左栏场景图：右边缘向右渐隐，平滑融入右侧的 new-bg.jpg 背景板，消除硬切分界 */
+.scene-login .scene-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 70%,
+    rgba(0, 0, 0, 0.55) 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 70%,
+    rgba(0, 0, 0, 0.55) 88%,
+    transparent 100%
+  );
+}
+.scene-login .scene-caption {
+  left: 8%;
+  bottom: 20px;
+}
+.scene-login .scene-dots {
+  left: 0;
+  bottom: 20px;
+}
+.login-story {
+  z-index: 10;
+  pointer-events: none;
+}
+.login-art > .brand-lockup {
+  pointer-events: none;
+  /* 品牌标识强化：深色背景上更醒目、清晰锐利 */
+  color: #ffffff;
+}
+.login-art > .brand-lockup > svg {
+  color: #7ee0ff;
+  filter: none;
+}
+.login-art > .brand-lockup > span {
+  font-weight: 700;
+  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.login-art > .brand-lockup small {
+  color: rgba(200, 226, 250, 0.85);
+  letter-spacing: 0.08em;
+}
+@media (min-width: 1200px) {
+  .scene-layer img {
+    object-fit: cover;
+  }
+}
+@media (max-width: 1100px) {
+  .scene-caption {
+    display: none;
+  }
+  .scene-login .scene-caption {
+    display: grid;
+  }
+  .hero-copy {
+    max-width: 70%;
+  }
+}
+@media (max-width: 767px) {
+  .motion-toggle {
+    padding: 0;
+    min-width: 36px;
+  }
+  .motion-toggle > span,
+  .theme-track {
+    display: none;
+  }
+  .header-status {
+    gap: 5px;
+  }
+  .theme-toggle {
+    min-width: 36px;
+    padding: 0 8px;
+  }
+  .header-status > span:not(.header-divider) {
+    display: none;
+  }
+  .workspace-hero {
+    min-height: 420px;
+  }
+  .hero-copy {
+    max-width: 100%;
+    padding: 30px 24px 80px;
+  }
+  .scene-viewport {
+    inset: 0;
+    opacity: 0.45;
+  }
+.scene-layer img {
+    object-position: 67% 50%;
+  }
+  .scene-caption {
+    left: 22px;
+    display: grid;
+  }
+  .scene-caption small {
+    display: none;
+  }
+  .scene-dots {
+    left: 0;
+  }
+  .login-theme {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+}
+[data-motion="off"] .page-stage,
+[data-motion="off"] .btn::after,
+[data-motion="off"] .tool-card::after {
+  animation: none;
+}
+[data-motion="off"] .btn,
+[data-motion="off"] .tool-card,
+[data-motion="off"] .nav-item,
+[data-motion="off"] .theme-track i,
+[data-motion="off"] .scene-dot span,
+[data-motion="off"] .btn > svg,
+[data-motion="off"] .tool-card-bottom > svg,
+[data-motion="off"] .knowledge-shortcut {
+  transition: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .page-stage {
+    transform: none;
+  }
+}
+@media (max-width: 767px) {
+  .login-art {
+    min-height: 310px;
+  }
+  .login-story {
+    bottom: 78px;
+  }
+  .scene-login .scene-viewport {
+    inset: 0;
+    opacity: 0.5;
+  }
+}
+[data-motion="off"][data-theme="light"] .theme-track i {
+  transform: translateX(14px);
+}
+@media (max-width: 767px) {
+  .scene-caption strong {
+    display: none;
+  }
+  .motion-toggle,
+  .theme-toggle {
+    min-width: 44px;
+  }
+}
+.page-content {
+  overflow-x: clip;
+}
+

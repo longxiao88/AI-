@@ -18,6 +18,29 @@ const REVEAL_MS = 620;
 const REVEAL_EASING = "cubic-bezier(0.45, 0, 0.2, 1)";
 
 /**
+ * 揭幕开始 / 结束的全局事件。
+ *
+ * 分界线推的是「切换后」那张快照的遮罩，所以凡是希望"被分界线碰到就消失"的
+ * 图层（目前是气泡画布），必须在快照拍摄之前把自己清空 —— 监听 BEGIN 事件即可。
+ * END 之后它们可以恢复生成。
+ */
+export const THEME_REVEAL_BEGIN = "theme:reveal-begin";
+export const THEME_REVEAL_END = "theme:reveal-end";
+
+/** 连续快速切换时会有多个过渡重叠，用计数保证最后一个结束才发 END */
+let revealDepth = 0;
+
+function emitBegin() {
+  revealDepth += 1;
+  window.dispatchEvent(new Event(THEME_REVEAL_BEGIN));
+}
+
+function emitEnd() {
+  revealDepth = Math.max(0, revealDepth - 1);
+  if (revealDepth === 0) window.dispatchEvent(new Event(THEME_REVEAL_END));
+}
+
+/**
  * 遮罩位移的起止位置，和 style.css 里 ::view-transition-new(root) 的
  * mask-size: 100% 200% 配套：
  *   - 起点 -24%：羽化带最淡的一端刚好落在屏幕底边（此刻屏幕上还看不出新主题）
@@ -45,8 +68,6 @@ function getStarter(): ((callback: () => void | Promise<void>) => ViewTransition
 }
 
 /** 当前浏览器是否支持视图过渡 */
-export const supportsViewTransition = () => getStarter() !== undefined;
-
 /**
  * 切换主题，并在支持的浏览器里播放「新主题从底部升起」的揭幕动画。
  *
@@ -64,7 +85,12 @@ export function revealThemeChange(update: () => void, motionEnabled = true): voi
     return;
   }
 
-  const transition = start(update);
+  const transition = start(() => {
+    // 必须在 update() 之前触发：浏览器会在回调返回后立刻拍「切换后」的快照，
+    // 晚一步调用，气泡就会留在新快照里，分界线扫过去也看不见消失。
+    emitBegin();
+    update();
+  });
 
   transition.ready
     .then(() => {
@@ -78,6 +104,6 @@ export function revealThemeChange(update: () => void, motionEnabled = true): voi
       // 连续快速点击时上一次过渡会被跳过，这里无需处理
     });
 
-  // 过渡被跳过时 finished 也会 reject，避免控制台出现未捕获异常
-  transition.finished.catch(() => {});
+  // 过渡被跳过时 finished 也会 reject，两种情况都要通知恢复
+  transition.finished.then(emitEnd, emitEnd);
 }

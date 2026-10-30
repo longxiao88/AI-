@@ -21,7 +21,7 @@ async function harness(options: Parameters<typeof createApp>[1] = {}, dbPath = "
     return { status: response.status, body: await response.json() };
   };
   const session = await call("/auth/session");
-  await call(session.body.setupRequired ? "/auth/setup" : "/auth/login", "POST", {
+  await call(session.body.accounts.length === 0 ? "/auth/setup" : "/auth/login", "POST", {
     username: "tester",
     password: "TestPassword123",
   });
@@ -164,8 +164,8 @@ test("document AI contract: fenced ok, invalid shapes 502, busy released, nothin
         source: "原文",
       });
       assert.equal(result.status, expected, content.slice(0, 40));
-      assert.equal(h.store.list().length, 0);
-      assert.equal(h.store.history().length, 0);
+      assert.equal(h.store.list("tester").length, 0);
+      assert.equal(h.store.history("tester").length, 0);
     } finally {
       await h.close();
     }

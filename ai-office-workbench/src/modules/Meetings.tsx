@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { ListTodo, Sparkles } from "lucide-react";
 import { AI_INPUT_LIMIT, type MeetingResult } from "../../shared/ai-schemas";
-import { Button, Field, useConfirm } from "../components/ui";
+import type { Entry } from "../../shared/types";
+import { Button, Field, Notice, useConfirm } from "../components/ui";
 import { Workspace } from "../components/Workspace";
 import { api, message } from "../lib/api";
 import { useEditor, type ModuleProps } from "../lib/editor";
@@ -10,6 +11,15 @@ import { useBusy } from "../lib/useBusy";
 interface Draft {
   summary: string;
   todos: string;
+}
+
+/** 把多行待办拆成逐条，过滤空行和重复项。 */
+function parseTodos(todos: string): string[] {
+  const seen = new Set<string>();
+  return todos
+    .split("\n")
+    .map((line) => line.replace(/^[-*\s\d.、]+/, "").trim())
+    .filter((line) => line && !seen.has(line) && (seen.add(line), true));
 }
 
 export function Meetings({ onDirty, onBusy, initialId }: ModuleProps) {
@@ -22,6 +32,57 @@ export function Meetings({ onDirty, onBusy, initialId }: ModuleProps) {
   const [busy, runAi] = useBusy(onBusy);
   const [draft, setDraft] = useState<Draft | null>(null);
   const confirm = useConfirm();
+  // 待办转任务：目标项目 + 逐条勾选
+  const [projects, setProjects] = useState<Entry[]>([]);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [targetId, setTargetId] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [transferBusy, setTransferBusy] = useState(false);
+  const [transferError, setTransferError] = useState("");
+
+  // 打开待办转任务面板时，读取项目列表供选择
+  useEffect(() => {
+    if (!transferOpen) return;
+    api<Entry[]>(`/entries?kind=projects`)
+      .then((rows) => {
+        setProjects(rows);
+        setTargetId(rows[0]?.id || "");
+      })
+      .catch((err) => setTransferError(message(err)));
+  }, [transferOpen]);
+
+  function openTransfer() {
+    const items = parseTodos(e.data.todos || "");
+    if (!items.length) {
+      e.setError("待办事项还是空的，先填写或生成待办，再转为项目任务。");
+      return;
+    }
+    setTransferError("");
+    setSelected(new Set(items));
+    setTransferOpen(true);
+  }
+
+  async function commitTransfer() {
+    if (transferBusy || !targetId) return;
+    const titles = [...selected].filter(Boolean);
+    if (!titles.length) return setTransferError("请至少勾选一条待办。");
+
+    setTransferBusy(true);
+    setTransferError("");
+    try {
+      const result = await api<{ tasks: unknown[] }>(
+        `/projects/${targetId}/tasks/batch`,
+        "POST",
+        { requestId: crypto.randomUUID(), tasks: titles.map((title) => ({ title })) },
+      );
+      setTransferOpen(false);
+      e.setSuccess(`已把 ${result.tasks.length} 条待办加入项目任务。`);
+    } catch (err) {
+      setTransferError(message(err));
+    } finally {
+      setTransferBusy(false);
+    }
+  }
 
   // 切换到别的会议记录时丢掉上一条的草稿
   const currentId = e.current?.id;
@@ -145,6 +206,76 @@ export function Meetings({ onDirty, onBusy, initialId }: ModuleProps) {
           />
         </Field>
       </div>
+
+      <div className="flex flex-wrap items-center gap-3 border-t border-slate-200 pt-4">
+        <Button disabled={busy || e.saving || !e.data.todos?.trim()} onClick={openTransfer}>
+          <ListTodo size={16} />
+          转为项目任务
+        </Button>
+        <span className="text-xs text-slate-500">
+          把待办事项逐行转为某个项目的任务，勾选后写入看板。
+        </span>
+      </div>
+
+      {transferOpen && (
+        <div className="grid gap-4 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+          <div className="flex min-h-9 flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">转为项目任务（未写入）</h3>
+            <span className="text-xs text-slate-500">勾选要转的待办，确认后加入目标项目</span>
+          </div>
+          <Notice error={transferError} />
+          <Field label="目标项目">
+            <select
+              value={targetId}
+              disabled={transferBusy}
+              onChange={(event) => setTargetId(event.target.value)}
+            >
+              {projects.length ? (
+                projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))
+              ) : (
+                <option value="">还没有项目，请先到「项目」页新建一个</option>
+              )}
+            </select>
+          </Field>
+          <div className="grid gap-2">
+            {parseTodos(e.data.todos || "").map((item) => (
+              <label key={item} className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  disabled={transferBusy}
+                  checked={selected.has(item)}
+                  onChange={(event) =>
+                    setSelected((prev) => {
+                      const next = new Set(prev);
+                      if (event.target.checked) next.add(item);
+                      else next.delete(item);
+                      return next;
+                    })
+                  }
+                />
+                <span className="break-words leading-6">{item}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="primary"
+              disabled={transferBusy || !targetId || !selected.size}
+              onClick={() => void commitTransfer()}
+            >
+              {transferBusy ? "正在写入…" : `确认加入（${selected.size}）`}
+            </Button>
+            <Button disabled={transferBusy} onClick={() => setTransferOpen(false)}>
+              取消
+            </Button>
+          </div>
+        </div>
+      )}
     </Workspace>
   );
 }

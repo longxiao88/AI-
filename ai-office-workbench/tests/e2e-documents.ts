@@ -95,7 +95,7 @@ try {
   assert.equal(await page.getByRole("button", { name: "保存", exact: true }).isDisabled(), true);
   await page.getByRole("status").filter({ hasText: "分析草稿已生成" }).waitFor();
   assert.equal(await page.getByLabel("分析笔记", { exact: true }).inputValue(), "");
-  assert.equal(store.history().length, 0);
+  assert.equal(store.history("documents").length, 0);
   await page
     .getByLabel("草稿 · 概述", { exact: true })
     .fill("【测试】文档说明了四模块框架。（已人工核对）");
@@ -119,9 +119,9 @@ try {
     "2. 【测试】安排验收",
   ].join("\n");
   assert.equal(await page.getByLabel("分析笔记", { exact: true }).inputValue(), expected);
-  assert.equal(store.history().length, 0);
+  assert.equal(store.history("documents").length, 0);
   await save();
-  assert.equal(store.history().length, 1);
+  assert.equal(store.history("documents").length, 1);
   checks.push("编辑草稿后应用，小标题拼接进笔记，保存产生一条日志");
   await page.getByRole("button", { name: "生成分析草稿", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "分析草稿已生成" }).waitFor();
@@ -147,9 +147,9 @@ try {
       "2. 【测试】安排验收",
     ].join("\n"),
   );
-  assert.equal(store.history().length, 1);
+  assert.equal(store.history("documents").length, 1);
   await save();
-  assert.equal(store.history().length, 2);
+  assert.equal(store.history("documents").length, 2);
   checks.push("已有笔记时应用需确认，替换后保存产生第二条日志");
   providerStatus = 401;
   await page.getByRole("button", { name: "生成分析草稿", exact: true }).click();
@@ -158,7 +158,7 @@ try {
     await page.getByLabel("原文预览与编辑", { exact: true }).inputValue(),
     "本文介绍办公助手的四个模块与当前交付节奏。",
   );
-  assert.equal(store.history().length, 2);
+  assert.equal(store.history("documents").length, 2);
   providerStatus = 200;
   checks.push("401 失败保留原文与笔记，不产生日志");
   await page.setViewportSize({ width: 390, height: 844 });

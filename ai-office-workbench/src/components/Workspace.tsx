@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
-import type { Editor } from "../lib/editor";
-import { Button, Empty, Field, Notice, cn } from "./ui";
+import type { WorkspaceEditor } from "../lib/editor";
+import { Button, Field, Notice, cn } from "./ui";
 
 export function Workspace({
   editor: e,
@@ -9,7 +9,7 @@ export function Workspace({
   label,
   busy = false,
 }: {
-  editor: Editor;
+  editor: WorkspaceEditor;
   children: ReactNode;
   label: string;
   busy?: boolean;

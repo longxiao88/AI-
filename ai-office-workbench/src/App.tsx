@@ -3,6 +3,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { ArrowUpRight, Layers3, LogOut } from "lucide-react";
 import type { AuthState, Profile as UserProfile } from "../shared/types";
 import { BubbleBackground } from "./components/BubbleBackground/BubbleBackground";
+import { FishBackground } from "./components/FishBackground/FishBackground";
+import { ScrollRail } from "./components/ScrollRail";
 import { MotionToggle } from "./components/Motion";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { Button, cn, useConfirm } from "./components/ui";
@@ -19,6 +21,8 @@ import { Login } from "./modules/Login";
 import { Meetings } from "./modules/Meetings";
 import { Profile } from "./modules/Profile";
 import { Projects } from "./modules/Projects";
+import { Resources } from "./modules/Resources";
+import { Search } from "./modules/Search";
 import { Settings } from "./modules/Settings";
 import { Writing } from "./modules/Writing";
 
@@ -67,7 +71,8 @@ export default function App() {
     try {
       await api("/auth/logout", "POST");
       setDirty(false);
-      setAuth({ ...auth!, user: null });
+      // 退出后回到登录页，并刷新账号列表以便切换账号
+      setAuth(await api<AuthState>("/auth/session"));
       setPage("home");
       setInitialId(undefined);
     } catch (e) {
@@ -90,11 +95,13 @@ export default function App() {
       <>
         <div className="ambient-bg" aria-hidden="true" />
         <BubbleBackground />
+        <FishBackground />
         <div className="login-theme">
           <MotionToggle />
           <ThemeToggle />
         </div>
         <Login state={auth} onLogin={setAuth} />
+        <ScrollRail />
       </>
     );
 
@@ -106,16 +113,31 @@ export default function App() {
 
   const pages: Record<Page, () => ReactNode> = {
     home: () => <Home user={user} navigate={(p, id) => void navigate(p, id)} />,
+    search: () => <Search navigate={(p, id) => void navigate(p, id)} />,
     chat: () => <Chat onDirty={setDirty} onBusy={setBusy} />,
     writing: () => <Writing {...moduleProps} />,
     meetings: () => <Meetings {...moduleProps} />,
     projects: () => <Projects {...moduleProps} />,
     documents: () => <Documents {...moduleProps} />,
     knowledge: () => <Knowledge {...moduleProps} />,
+    resources: () => <Resources onBusy={setBusy} />,
     clock: () => <Clock />,
     history: () => <History />,
-    profile: () => <Profile user={user} onUpdate={updateUser} onDirty={setDirty} />,
-    settings: () => <Settings onDirty={setDirty} onBusy={setBusy} />,
+    profile: () => (
+      <Profile
+        user={user}
+        onUpdate={updateUser}
+        onDirty={setDirty}
+        focusEmail={initialId === "email"}
+      />
+    ),
+    settings: () => (
+      <Settings
+        onDirty={setDirty}
+        onBusy={setBusy}
+        onGoBindEmail={() => void navigate("profile", "email")}
+      />
+    ),
   };
 
   let status = isPreview ? "PREVIEW" : "LOCAL";
@@ -126,14 +148,20 @@ export default function App() {
     <div className="app-shell">
       <div className="ambient-bg" aria-hidden="true" />
       <BubbleBackground />
+      <FishBackground />
+      <ScrollRail />
+      {/* 左侧导航列：顶部品牌栏、中间导航、底部账号栏，三条横带各司其职 */}
       <aside className="app-sidebar">
-        <div className="brand-lockup">
-          <Layers3 size={25} />
-          <span>
-            {appName}
-            <small>INTELLIGENT WORKSPACE</small>
-          </span>
+        <div className="sidebar-top">
+          <div className="brand-lockup">
+            <Layers3 size={24} />
+            <span>
+              {appName}
+              <small>INTELLIGENT WORKSPACE</small>
+            </span>
+          </div>
         </div>
+
         <div className="nav-section-label">WORKSPACE / 工作空间</div>
         <nav aria-label="主导航">
           {navigation.map((item, index) => (
@@ -156,6 +184,7 @@ export default function App() {
             </button>
           ))}
         </nav>
+
         <div className="sidebar-bottom">
           <div className="system-note">
             <span className="status-dot" />
@@ -163,8 +192,10 @@ export default function App() {
             <p>{isPreview ? "试填内容仅保存在你的浏览器" : "资料保存在本机 SQLite 中"}</p>
           </div>
           <button className="sidebar-user" onClick={() => void navigate("profile")} disabled={busy}>
-            <span className="avatar-small">{user.name.slice(0, 1)}</span>
-            <span>
+            <span className="avatar-small" aria-hidden="true">
+              {user.name.slice(0, 1)}
+            </span>
+            <span className="sidebar-user-text">
               <strong>{user.name}</strong>
               <small>{user.role || "个人工作空间"}</small>
             </span>
@@ -179,7 +210,7 @@ export default function App() {
 
       <main className="app-main">
         <header className="app-header">
-          <span>
+          <span className="crumbs">
             工作空间<span className="breadcrumb-slash">/</span>
             <strong>{meta.title}</strong>
           </span>
@@ -189,22 +220,6 @@ export default function App() {
             <LiveTime />
             <span className="header-divider" />
             <span>{status}</span>
-            <button
-              aria-label="个人资料"
-              className="avatar-small"
-              onClick={() => void navigate("profile")}
-              disabled={busy}
-            >
-              {user.name.slice(0, 1)}
-            </button>
-            <button
-              className="mobile-logout"
-              aria-label="退出登录"
-              onClick={() => void logout()}
-              disabled={busy}
-            >
-              <LogOut size={17} />
-            </button>
           </div>
         </header>
 

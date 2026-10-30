@@ -2,15 +2,17 @@
  * 演示模式（npm run build:preview）下的前端模拟接口。
  * 没有后端和数据库，数据存在访客自己浏览器的 localStorage 里，互不影响；
  * AI 相关接口一律返回提示，不伪造生成结果。
+ * 支持多账号：每个账号各自一份数据，账号列表与密码（仅演示，明文）也存本地。
  */
 
 import { makeLog, reverse, type AuditLog } from "../../shared/audit";
 import { searchKnowledge } from "../../shared/knowledge";
-import type { Entry, Kind, Profile, Task } from "../../shared/types";
+import { ACCOUNT } from "../../shared/constants";
+import type { Entry, Kind, KindDataMap, Profile, Task } from "../../shared/types";
 
-const storageKey = "ai-office-preview-v1";
-const profileKey = "ai-office-preview-profile";
-const sessionKey = "ai-office-preview-session";
+const dataKey = "ai-office-preview-v2";
+const accountsKey = "ai-office-preview-accounts-v2";
+const sessionKey = "ai-office-preview-session-v2";
 
 interface PreviewBatch {
   requestId: string;
@@ -19,26 +21,33 @@ interface PreviewBatch {
   taskIds: string[];
 }
 
+interface AccountRecord {
+  username: string;
+  password: string; // 演示模式明文，仅本浏览器
+  profile: Profile;
+}
+
 const at = "2026-09-17T00:00:00.000Z";
 
-const make = (id: string, kind: Kind, title: string, data: Entry["data"]): Entry => ({
-  id,
-  kind,
-  title,
-  data,
-  createdAt: at,
-  updatedAt: at,
-});
+const make = <K extends Kind>(id: string, kind: K, title: string, data: KindDataMap[K]): Entry =>
+  ({
+    id,
+    kind,
+    title,
+    data,
+    createdAt: at,
+    updatedAt: at,
+  }) as Entry;
 
-const defaultProfile: Profile = {
-  username: "demo",
-  name: "演示用户",
+const defaultProfile = (username: string, name: string): Profile => ({
+  username,
+  name,
   email: "",
   role: "",
   bio: "",
-};
+});
 
-// 演示数据，标题统一以「示例」开头
+// 示例数据模板
 const initial = {
   history: [] as AuditLog[],
   entries: [
@@ -76,9 +85,55 @@ const initial = {
   batches: [] as PreviewBatch[],
 };
 
+// 演示数据，标题统一以「示例」开头
+const makeInitial = (username: string): typeof initial => {
+  const base = structuredClone(initial);
+  // 每个账号的示例数据用唯一的 id，避免多账号间冲突
+  const prefix = username.replace(/[^a-zA-Z0-9]/g, "");
+  base.entries = base.entries.map((e) => ({ ...e, id: `${prefix}-${e.id}` }));
+  base.tasks = base.tasks.map((t) => ({
+    ...t,
+    id: `${prefix}-${t.id}`,
+    projectId: `${prefix}-${t.projectId}`,
+  }));
+  return base;
+};
+
 export function createPreviewApi(storage: Pick<Storage, "getItem" | "setItem">) {
+  function readAccounts(): AccountRecord[] {
+    try {
+      const raw = storage.getItem(accountsKey);
+      const value = raw ? JSON.parse(raw) : [];
+      return Array.isArray(value) ? value : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeAccounts(accounts: AccountRecord[]) {
+    storage.setItem(accountsKey, JSON.stringify(accounts));
+  }
+
+  function listProfiles(): Profile[] {
+    return readAccounts().map((a) => a.profile);
+  }
+
+  function currentUsername(): string | null {
+    return storage.getItem(sessionKey) || null;
+  }
+
+  function currentProfile(): Profile | null {
+    const username = currentUsername();
+    if (!username) return null;
+    const account = readAccounts().find((a) => a.username === username);
+    return account ? account.profile : null;
+  }
+
+  // 读取当前账号的数据
   function read(): typeof initial {
-    const raw = storage.getItem(storageKey);
+    const username = currentUsername();
+    if (!username) return structuredClone(initial);
+    const raw = storage.getItem(`${dataKey}:${username}`);
     if (raw) {
       try {
         const value = JSON.parse(raw);
@@ -92,35 +147,52 @@ export function createPreviewApi(storage: Pick<Storage, "getItem" | "setItem">) 
         // 数据损坏时恢复成示例数据
       }
     }
-    return structuredClone(initial);
+    return makeInitial(username);
   }
 
   function write(data: typeof initial) {
+    const username = currentUsername();
+    if (!username) return;
     try {
-      storage.setItem(storageKey, JSON.stringify(data));
+      storage.setItem(`${dataKey}:${username}`, JSON.stringify(data));
     } catch {
       throw Error("浏览器存储空间不足或被禁用，未能保存；当前输入仍保留。");
     }
   }
 
   return async function previewApi<T>(path: string, method = "GET", body?: any): Promise<T> {
-    const profile = (): Profile => {
-      try {
-        return JSON.parse(storage.getItem(profileKey) || "null") || { ...defaultProfile };
-      } catch {
-        return { ...defaultProfile };
-      }
-    };
-
     if (path === "/auth/session")
       return {
-        setupRequired: false,
-        user: storage.getItem(sessionKey) === "active" ? profile() : null,
+        accounts: listProfiles(),
+        user: currentProfile(),
       } as T;
 
+    if (path === "/auth/setup") {
+      const username = String(body?.username || "").trim();
+      const password = String(body?.password || "");
+      const name = String(body?.name || username).trim() || username;
+      if (!username || username.length < ACCOUNT.usernameMin) throw Error(`账号至少 ${ACCOUNT.usernameMin} 位。`);
+      if (password.length < ACCOUNT.passwordMin) throw Error(`密码至少 ${ACCOUNT.passwordMin} 位。`);
+      const accounts = readAccounts();
+      if (accounts.some((a) => a.username === username)) throw Error("该账号名已被使用，请换一个。");
+      const record: AccountRecord = {
+        username,
+        password,
+        profile: defaultProfile(username, name),
+      };
+      accounts.push(record);
+      writeAccounts(accounts);
+      storage.setItem(sessionKey, username);
+      return { accounts: listProfiles(), user: record.profile } as T;
+    }
+
     if (path === "/auth/login") {
-      storage.setItem(sessionKey, "active");
-      return { setupRequired: false, user: profile() } as T;
+      const username = String(body?.username || "").trim();
+      const password = String(body?.password || "");
+      const account = readAccounts().find((a) => a.username === username);
+      if (!account || account.password !== password) throw Error("账号或密码不正确。");
+      storage.setItem(sessionKey, username);
+      return { accounts: listProfiles(), user: account.profile } as T;
     }
 
     if (path === "/auth/logout") {
@@ -129,18 +201,23 @@ export function createPreviewApi(storage: Pick<Storage, "getItem" | "setItem">) 
     }
 
     if (path === "/profile") {
+      const username = currentUsername();
+      if (!username) throw Error("请先登录。");
+      const accounts = readAccounts();
+      const account = accounts.find((a) => a.username === username);
+      if (!account) throw Error("账号不存在。");
       if (method === "PUT") {
-        const value = {
-          username: "demo",
+        account.profile = {
+          username,
           name: String(body.name || "演示用户").slice(0, 60),
           email: String(body.email || "").slice(0, 120),
           role: String(body.role || "").slice(0, 80),
           bio: String(body.bio || "").slice(0, 500),
         };
-        storage.setItem(profileKey, JSON.stringify(value));
-        return value as T;
+        writeAccounts(accounts);
+        return account.profile as T;
       }
-      return profile() as T;
+      return account.profile as T;
     }
 
     if (path.startsWith("/knowledge/search"))
@@ -151,6 +228,10 @@ export function createPreviewApi(storage: Pick<Storage, "getItem" | "setItem">) 
 
     if (path.startsWith("/ai/"))
       throw Error("演示模式不提供 AI 调用，请在本机完整版中配置模型后使用。");
+
+    // 资源库的文件上传 / 下载 / 预览 / AI 分析均依赖后端文件存储，演示模式不支持
+    if (path.startsWith("/resources/"))
+      throw Error("演示模式不支持文件上传与预览，请在本机完整版中使用。");
 
     if (path.startsWith("/settings")) {
       if (method !== "GET") throw Error("演示模式不接收或保存 API Key。");
@@ -204,7 +285,9 @@ export function createPreviewApi(storage: Pick<Storage, "getItem" | "setItem">) 
         if (method === "PUT" && !existing) throw Error("记录已删除，请重新打开。");
         if (
           method === "POST" &&
-          !["writing", "meetings", "projects", "documents", "knowledge"].includes(parts[1])
+          !["writing", "meetings", "projects", "documents", "knowledge", "resources"].includes(
+            parts[1],
+          )
         )
           throw Error("未知模块。");
         const now = new Date().toISOString();

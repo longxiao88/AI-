@@ -1,0 +1,182 @@
+/* ========== 日间主题 ==========
+   登录页插图保持深色底；首页 hero 跟随主题，白底深字。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --theme-surface: #ffffff;
+  --theme-border: #d4e0ec;
+  --theme-ink: #334d68;
+  --surface: #ffffff;
+  --line: #d4e0ec;
+  --muted: #526a82;
+  --accent: #087ba5;
+  --color-white: #ffffff;
+  --color-slate-50: #f5f8fc;
+  --color-slate-100: #edf3f9;
+  --color-slate-200: #d4e0ec;
+  --color-slate-300: #b8c9da;
+  --color-slate-400: #647b92;
+  --color-slate-500: #526a82;
+  --color-slate-600: #3b536d;
+  --color-slate-700: #2c425b;
+  --color-slate-800: #172b43;
+  --color-blue-50: #eaf7fc;
+  --color-blue-100: #def1fa;
+  --color-blue-200: #a5cfdf;
+  --color-blue-300: #1882ab;
+  --color-blue-600: #077aab;
+  --color-blue-700: #05628c;
+  --color-blue-800: #07587b;
+  --color-red-50: #fff1f3;
+  --color-red-200: #f1b9c5;
+  --color-red-700: #a32443;
+}
+[data-theme="light"] .app-shell,
+[data-theme="light"] body {
+  background: #f3f7fc;
+}
+[data-theme="light"] .nav-item.is-active {
+  background: #e6f3fc;
+  color: #086b98;
+  border-color: #b0d5e9;
+}
+[data-theme="light"] .nav-item:hover,
+[data-theme="light"] .tool-card:hover,
+[data-theme="light"] .recent-row:hover {
+  background: #edf5fc;
+}
+[data-theme="light"] .btn-primary {
+  color: #ffffff;
+}
+/* 登录页那张插图铺满整块、没有文案要读，维持深色底更稳 */
+[data-theme="light"] .login-art {
+  --theme-surface: initial;
+  --theme-border: initial;
+  --theme-ink: initial;
+  color: #e8effb;
+}
+/*
+ * 首页 hero 跟随浅色主题，但底色不用纯白——大面积 #fff 配旁边明亮的图很刺眼，
+ * 用比页面背景稍深一点的浅灰蓝，既有层次也柔和。
+ */
+[data-theme="light"] .workspace-hero {
+  --theme-surface: #d9e3ef;
+  --theme-border: #c8d6e6;
+}
+[data-theme="light"] .workspace-hero .btn:not(.btn-primary) {
+  background: #eef4fb;
+  color: #2a4a68;
+  border-color: #cfdcea;
+}
+[data-theme="light"] .workspace-hero .hero-tag {
+  color: #5b7d9c;
+}
+[data-theme="light"] .workspace-hero .hero-copy p {
+  color: #55708a;
+}
+/* 图片渐隐到白底后，指示器与场景名要压深才看得清 */
+[data-theme="light"] .workspace-hero .scene-caption {
+  color: #3c5d7a;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9);
+}
+[data-theme="light"] .workspace-hero .scene-caption > span {
+  color: #2f6f92;
+}
+[data-theme="light"] .workspace-hero .scene-caption small {
+  color: #6d8ba6;
+}
+[data-theme="light"] .workspace-hero .scene-dot span {
+  background: rgba(30, 60, 90, 0.28);
+}
+[data-theme="light"] .workspace-hero .scene-dot[aria-pressed="true"] span {
+  background: #2f5c82;
+}
+[data-theme="light"] .page-number {
+  color: #b8c9da;
+}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.login-theme {
+  position: fixed;
+  top: 18px;
+  right: 22px;
+  z-index: 30;
+}
+.history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.history-heading > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.history-heading > button {
+  flex-shrink: 0;
+}
+.history-badge {
+  display: inline-block;
+  margin-right: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--accent);
+  font-size: 12px;
+}
+.history-page summary {
+  cursor: pointer;
+  color: var(--accent);
+  min-height: 32px;
+}
+.history-diff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.history-diff > div {
+  min-width: 0;
+  background: var(--color-slate-50);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+.history-diff h4 {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.history-diff pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 13px/1.8 inherit;
+  max-height: 360px;
+  overflow: auto;
+}
+@media (max-width: 767px) {
+  .history-diff {
+    grid-template-columns: 1fr;
+  }
+  .history-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .header-status {
+    gap: 8px;
+  }
+  .theme-toggle span {
+    display: none;
+  }
+}
+

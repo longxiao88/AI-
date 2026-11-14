@@ -1,0 +1,240 @@
+@media (max-width: 767px) {
+  .app-sidebar {
+    position: static;
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--theme-border, #26364c);
+    overflow: visible;
+  }
+  .sidebar-top {
+    height: 56px;
+    padding: 0 18px;
+    border-bottom: 0;
+  }
+  .nav-section-label {
+    display: none;
+  }
+  .app-sidebar nav {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 10px 12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .nav-item {
+    width: auto;
+    flex-shrink: 0;
+    gap: 8px;
+    padding: 0 12px;
+  }
+  .nav-index {
+    display: none;
+  }
+  .nav-break {
+    margin: 0;
+  }
+  .app-main {
+    margin: 0;
+    /* 给手机端固定在底部的账号栏让出空间 */
+    padding-bottom: 58px;
+  }
+  /* 手机上账号栏仍是「底栏」，只是改为整屏宽度固定在底部 */
+  .sidebar-bottom {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 14px;
+    background: var(--theme-surface, #0c1524);
+    border-top: 1px solid var(--theme-border, #1d2c41);
+  }
+  .sidebar-bottom .system-note {
+    display: none;
+  }
+  .sidebar-user {
+    width: auto;
+    margin-right: auto;
+    padding-left: 4px;
+  }
+  .sidebar-user strong,
+  .sidebar-user small {
+    max-width: 150px;
+  }
+  .logout {
+    width: auto;
+    min-height: 34px;
+    padding: 0 12px;
+  }
+  .app-header {
+    min-height: 56px;
+    padding: 10px 16px;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .header-status {
+    gap: 10px;
+  }
+  .header-status > .live-time,
+  .header-divider {
+    display: none;
+  }
+  .page-content {
+    padding: 20px 16px;
+  }
+  .preview-note {
+    font-size: 10px;
+    margin-bottom: 18px;
+  }
+  .page-heading {
+    margin-bottom: 20px;
+  }
+  .page-heading h1 {
+    font-size: 23px;
+  }
+  .page-heading p {
+    max-width: 280px;
+    line-height: 1.8;
+  }
+  .workspace-hero {
+    min-height: 390px;
+  }
+  .workspace-hero > img {
+    width: 100%;
+    height: 100%;
+    opacity: 0.38;
+    object-position: 50% center;
+  }
+  .hero-copy {
+    max-width: 100%;
+    padding: 28px 24px;
+  }
+  .hero-copy h2 {
+    font-size: 34px;
+  }
+  .hero-copy p {
+    color: var(--theme-ink, #b6cce0);
+  }
+  .tool-grid {
+    gap: 10px;
+  }
+  .tool-card {
+    padding: 16px;
+  }
+  .tool-card h3 {
+    font-size: 14px;
+  }
+  .tool-card p {
+    min-height: 40px;
+  }
+  .tool-card-bottom {
+    font-size: 8px;
+  }
+  .tool-card-bottom > svg {
+    width: 13px;
+  }
+  .home-side {
+    grid-template-columns: 1fr;
+  }
+  .section-label > span {
+    font-size: 7px;
+  }
+  .recent-row {
+    padding: 15px;
+  }
+  .recent-row strong {
+    font-size: 11px;
+  }
+  .recent-row > time {
+    font-size: 9px;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-summary {
+    padding: 24px;
+  }
+  .clock-grid {
+    grid-template-columns: 1fr;
+  }
+  .timer-panel {
+    padding: 20px;
+  }
+  .timer-tabs .btn {
+    padding: 8px 12px;
+  }
+  .login-shell {
+    display: flex;
+    flex-direction: column;
+  }
+  .login-art {
+    min-height: 220px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .login-art > .brand-lockup {
+    padding: 22px;
+  }
+  .login-art > img {
+    width: 58%;
+    height: 100%;
+    top: 0;
+    right: 0;
+    left: auto;
+    opacity: 0.75;
+  }
+  .login-story {
+    bottom: 22px;
+    left: 22px;
+  }
+  .login-story > .eyebrow,
+  .login-story > p,
+  .login-pill-row {
+    display: none;
+  }
+  .login-story h1 {
+    font-size: 23px;
+    margin: 0;
+    line-height: 1.5;
+  }
+  .login-form-wrap {
+    padding: 38px 24px 80px;
+  }
+  .login-form h2 {
+    font-size: 25px;
+  }
+  .login-version {
+    bottom: 25px;
+  }
+  .timer-face output {
+    font-size: 42px;
+  }
+  .profile-summary .avatar-large {
+    width: 64px;
+    height: 64px;
+    font-size: 25px;
+  }
+  .section-label span {
+    max-width: 50%;
+    text-align: right;
+  }
+}
+@media (min-width: 768px) {
+  .workspace-hero > img {
+    object-fit: contain;
+    object-position: right center;
+  }
+}
+.tool-card p {
+  font-size: 12px;
+}
+.nav-item {
+  font-size: 14px;
+}
+

@@ -1,0 +1,1144 @@
+/* ========== 动效：背景轮播、页面过渡、按钮光效 ==========
+   只用 transform / opacity 做动画，关闭动效或系统设置减少动态时全部停止。 */
+.app-main {
+  perspective: 1600px;
+}
+.page-stage {
+  transform-origin: 12% 15%;
+  animation: page-turn-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes page-turn-in {
+  from {
+    opacity: 0.2;
+    transform: translate3d(20px, 6px, 0) rotateY(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotateY(0);
+  }
+}
+.btn,
+.tool-card,
+.nav-item,
+.theme-toggle,
+.motion-toggle {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn,
+.tool-card,
+.nav-item,
+.recent-row,
+.knowledge-shortcut {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn::after,
+.tool-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: -50% auto -50% -45%;
+  width: 35%;
+  background: linear-gradient(100deg, transparent, rgba(140, 220, 255, 0.2), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled)::after,
+  .tool-card:hover::after {
+    animation: button-glint 550ms ease-out both;
+  }
+  .tool-card:hover,
+  .knowledge-shortcut:hover {
+    transform: translateY(-5px);
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+  .nav-item:hover {
+    transform: translateX(3px);
+  }
+  .tool-card:hover .tool-card-bottom > svg,
+  .btn:hover > svg {
+    transform: translateX(3px);
+  }
+}
+.btn:active:not(:disabled),
+.tool-card:active {
+  transform: scale(0.98);
+}
+.btn > svg,
+.tool-card-bottom > svg {
+  transition: transform 180ms ease-out;
+}
+@keyframes button-glint {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(580%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.motion-toggle[aria-pressed="true"] {
+  color: var(--accent);
+}
+.login-theme {
+  display: flex;
+  gap: 8px;
+}
+.theme-toggle {
+  gap: 9px;
+}
+/* 主题开关做成玻璃：轨道是磨砂玻璃槽，圆点是带高光的玻璃球。
+   边框用 inset 阴影模拟，避免 border 改变 34×20 的几何尺寸。
+   颜色语意：冷青 = 黑夜，暖琥珀 = 白天。 */
+.theme-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.16),
+    0 1px 2px rgba(0, 0, 0, 0.14);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
+  backdrop-filter: blur(8px) saturate(1.15);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+.theme-track i {
+  display: block;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  /* 通透玻璃珠：左上角一点镜面高光，珠体本身几乎透明，只带极淡的冷色 */
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.4) 28%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(circle at 50% 72%, rgba(150, 215, 255, 0.5) 0%, rgba(96, 170, 230, 0.22) 60%, rgba(255, 255, 255, 0.1) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.55),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(20, 70, 120, 0.35),
+    0 1px 4px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+[data-theme="light"] .theme-track {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.16) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.85),
+    inset 0 -2px 3px rgba(70, 55, 20, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .theme-track i {
+  transform: translateX(14px);
+  /* 白天用暖色极淡的一层，仍然保持通透而不是实心球 */
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.5) 28%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(circle at 50% 72%, rgba(255, 226, 160, 0.55) 0%, rgba(255, 196, 90, 0.24) 60%, rgba(255, 255, 255, 0.14) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -2px 4px rgba(130, 85, 10, 0.28),
+    0 1px 4px rgba(0, 0, 0, 0.18);
+}
+/*
+ * 登录页：轮播图在 58% 宽的左栏里硬切到右栏，形成一条明显的竖线。
+ * 这里给右边缘加一段渐隐，让它平滑过渡到背景视频。
+ * 渐隐放在 viewport 上（和首页同理），两层图一起被裁，不会互相透出。
+ */
+.scene-carousel.scene-login .scene-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 84%,
+    rgba(0, 0, 0, 0.55) 94%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 84%,
+    rgba(0, 0, 0, 0.55) 94%,
+    transparent 100%
+  );
+}
+.workspace-hero {
+  min-height: 380px;
+}
+.hero-copy {
+  padding-top: 38px;
+  padding-bottom: 55px;
+  max-width: 55%;
+  pointer-events: none;
+}
+.hero-copy button {
+  pointer-events: auto;
+}
+.hero-copy h2 {
+  letter-spacing: -0.025em;
+}
+.scene-carousel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+/* 视口就是滑动窗口：超出部分裁掉，横向手势交给 JS，纵向留给页面滚动 */
+.scene-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+.scene-viewport:active {
+  cursor: grabbing;
+}
+/* 两层叠放：下层是目标图，上层是当前图，靠遮罩擦除露出下层 */
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* 提升为独立合成层，遮罩按帧重算时不牵连其它内容 */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+}
+/* 渐变压到 200% 宽度：mask-position 0% 时整段落在实心区（全显），100% 时落在透明区（全隐） */
+.scene-layer-top {
+  /* 提前告诉浏览器这个属性会变，减少逐帧重算带来的卡顿 */
+  will-change: mask-position;
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.scene-layer-top.wipe-l {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to right, #000 0%, #000 50%, transparent 50%, transparent 100%);
+}
+.scene-layer-top.wipe-r {
+  -webkit-mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to left, #000 0%, #000 50%, transparent 50%, transparent 100%);
+}
+/*
+ * 首页：左侧渐隐放在「两层共同的父容器」上，而不是每张图自己。
+ * 如果加在 img 上，上层的左边缘会半透明，擦除时下层就从那里透出来——
+ * 看起来像两张图叠在一起。放在 viewport 上，两层一起被裁，彼此不会互透。
+ *
+ * 渐隐曲线整体前移收紧（原 55% 才全实 → 现在 38%），让右侧画面尽快恢复实体，
+ * 避免整张图看起来蒙着一层雾；左侧仍保留足够淡出的余量承托白色标题。
+ */
+.scene-carousel:not(.scene-login) .scene-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0.46) 16%,
+    rgba(0, 0, 0, 0.84) 28%,
+    #000 38%,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0.46) 16%,
+    rgba(0, 0, 0, 0.84) 28%,
+    #000 38%,
+    #000 100%
+  );
+}
+.scene-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 50%;
+  /* 渐隐会让画面发灰，先把饱和度与对比度提上来抵消；
+     白天模式背景更亮，需要再强一些才不显得蒙雾 */
+  filter: saturate(1.24) contrast(1.14) brightness(1.02);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+[data-theme="light"] .scene-layer img {
+  filter: saturate(1.32) contrast(1.2) brightness(1.03);
+}
+.scene-caption {
+  position: absolute;
+  left: 26px;
+  bottom: 14px;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 9px;
+  font-size: 11px;
+  color: #dceaf7;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
+}
+.scene-caption > span {
+  font: 10px/1.5 monospace;
+  color: #78cbe9;
+}
+.scene-caption strong {
+  font-weight: 500;
+}
+.scene-caption small {
+  grid-column: 1/-1;
+  font: 8px/1.5 monospace;
+  letter-spacing: 0.07em;
+  color: #87a9c7;
+}
+/* 指示器：底部居中，当前项拉伸成胶囊，其余是半透明圆点 */
+.scene-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.scene-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+[data-motion="off"] .scene-layer-top {
+  transition: none !important;
+}
+.scene-dot span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.32);
+  transition:
+    width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 320ms;
+}
+.scene-dot:hover span {
+  background: rgba(255, 255, 255, 0.55);
+}
+.scene-dot[aria-pressed="true"] span {
+  width: 22px;
+  background: #fff;
+}
+.scene-login .scene-viewport {
+  inset: 0;
+}
+/* 登录页左栏场景图：右边缘向右渐隐，平滑融入右侧的 new-bg.jpg 背景板，消除硬切分界 */
+.scene-login .scene-viewport {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 70%,
+    rgba(0, 0, 0, 0.55) 88%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0%,
+    #000 70%,
+    rgba(0, 0, 0, 0.55) 88%,
+    transparent 100%
+  );
+}
+.scene-login .scene-caption {
+  left: 8%;
+  bottom: 20px;
+}
+.scene-login .scene-dots {
+  left: 0;
+  bottom: 20px;
+}
+.login-story {
+  z-index: 10;
+  pointer-events: none;
+}
+/* 注册页整页背景：海底发光树循环视频，左右两栏共用同一层。
+   两栏本身是透明的，视频从底下透出来，所以左右是同一个连续画面。
+   object-position 偏左，把画面里的树放在屏幕左侧、给右边表单留出水域。
+   注意：decoration.css 里的 `.login-shell > *` 会把它压成 relative，
+   这里用更高的选择器优先级（两个类）盖回来。 */
+/* 注册视图的表单：彻底不要卡片背景。
+   任何「有范围」的背景（纯色、玻璃、模糊、渐变）都会显出一个矩形轮廓，
+   所以这里把底、边框、阴影、流光框全部去掉，只让内容直接浮在画面上。
+   代价是文字必须换成浅色 —— 深色字在深色海景上根本读不出来。 */
+.login-shell.is-cinematic .login-form.light-frame-host {
+  background: none;
+  border: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* 卡片四角的流光描边也会勾出一个方框，注册视图隐去 */
+.login-shell.is-cinematic .login-form .light-frame {
+  display: none;
+}
+/* 文字转浅色 + 轻微暗色投影，保证在发光画面上的可读性 */
+/* 注册页文字统一为高对比白色：
+   背景是会动的深色海景，亮度随时在变，淡蓝字很容易被吞掉。
+   全部提到纯白/近白，并配一层较强的暗色投影把字从画面上"托"起来。 */
+.login-shell.is-cinematic .login-form h2 {
+  color: #ffffff;
+  text-shadow:
+    0 0 1px rgba(1, 7, 15, 0.95),
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 4px 20px rgba(0, 8, 18, 0.85);
+}
+.login-shell.is-cinematic .login-form .eyebrow {
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 2px 14px rgba(0, 8, 18, 0.8);
+}
+.login-shell.is-cinematic .login-form .form-intro {
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow:
+    0 0 1px rgba(1, 7, 15, 0.95),
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 2px 14px rgba(0, 8, 18, 0.8);
+}
+.login-shell.is-cinematic .login-form label {
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow:
+    0 0 1px rgba(1, 7, 15, 0.96),
+    0 1px 2px rgba(0, 8, 18, 0.92),
+    0 2px 14px rgba(0, 8, 18, 0.82);
+}
+.login-shell.is-cinematic .login-form .login-footnote {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow:
+    0 0 1px rgba(1, 7, 15, 0.95),
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 2px 12px rgba(0, 8, 18, 0.8);
+}
+/* 输入框保持实底，避免占位文字压在画面纹理上 */
+/* ===== 表单控件：半透明玻璃质感 =====
+   输入框和白底的切换标签原来是实心块，压在深色海景上像贴上去的。
+   改成玻璃：低不透明度 + 背景模糊 + 细白边，既透出画面又保留控件边界。 */
+.login-shell.is-cinematic .login-form input {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  -webkit-backdrop-filter: blur(10px) saturate(1.25);
+  backdrop-filter: blur(10px) saturate(1.25);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.login-shell.is-cinematic .login-form input::placeholder {
+  color: rgba(255, 255, 255, 0.88);
+}
+.login-shell.is-cinematic .login-form input:hover {
+  background: rgba(255, 255, 255, 0.17);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+.login-shell.is-cinematic .login-form input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(124, 214, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(88, 178, 238, 0.16);
+  outline: none;
+}
+/* 浏览器自动填充（Chrome/Edge 记住的账号、密码）：UA 内部样式会把输入框刷成
+   浅蓝白实底 + 黑字，在深色海景上就是突兀的一格白。这条只能靠巨大的 inset
+   阴影盖掉底色（背景色改不动，UA 用的是内部强制值），文字用 text-fill 改回白色。
+   注意：这不是装饰性阴影，而是覆盖 UA 强制底色的唯一手段。 */
+.login-shell.is-cinematic .login-form input:-webkit-autofill,
+.login-shell.is-cinematic .login-form input:-webkit-autofill:hover,
+.login-shell.is-cinematic .login-form input:-webkit-autofill:focus,
+.login-shell.is-cinematic .login-form input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px rgba(10, 32, 48, 0.88) inset;
+  box-shadow: 0 0 0 1000px rgba(10, 32, 48, 0.88) inset;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-out 0s;
+}
+/* 登录 / 注册新账号 的切换条 */
+.login-shell.is-cinematic .login-tabs {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.26);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  backdrop-filter: blur(12px) saturate(1.3);
+}
+.login-shell.is-cinematic .login-tabs button:not(.is-active) {
+  color: rgba(255, 255, 255, 0.92);
+}
+/* 激活项也做成玻璃，靠"更亮 + 高光边 + 投影"和未激活项区分 */
+.login-shell.is-cinematic .login-tabs button.is-active {
+  background: rgba(255, 255, 255, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 2px 12px rgba(0, 18, 36, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  font-weight: 600;
+}
+/* 主操作按钮同样做成玻璃，靠更强的边框高光和阴影保持"可点"的分量 */
+.login-shell.is-cinematic .login-form .btn-primary {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  font-weight: 600;
+  -webkit-backdrop-filter: blur(14px) saturate(1.45);
+  backdrop-filter: blur(14px) saturate(1.45);
+  box-shadow:
+    0 6px 24px rgba(0, 18, 36, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: background 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.login-shell.is-cinematic .login-form .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.26);
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 8px 28px rgba(0, 18, 36, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.login-shell.is-cinematic .login-form .btn-primary:active {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 2px 10px rgba(0, 18, 36, 0.35),
+    inset 0 2px 6px rgba(0, 18, 36, 0.2);
+}
+/* 原先这里把左上角改成一小块辐射压暗，避免横贯全栏造成亮度分界线。
+   那块压暗已随 components.css 的 .login-art::before 一起移除：
+   实测它对画面毫无影响，纯属历史遗留。 */
+/* 右上角的「动效 / 主题」按钮：浅色磨砂玻璃填充 + 亮边，
+   在深色海景上靠「比背景亮一档的雾面 + 一圈白边」把轮廓撑出来，
+   而不是靠一块深色实底去盖住画面。参数与左侧功能标签同一套。
+   注意这两个按钮挂在 .login-theme 里、位于 .login-shell 之外，
+   所以用 :has() 从 body 层定位当前是否在注册视图。 */
+body:has(.login-shell.is-cinematic) .motion-toggle,
+body:has(.login-shell.is-cinematic) .theme-toggle {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 2px 12px rgba(0, 8, 18, 0.28);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  backdrop-filter: blur(16px) saturate(1.4);
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+/* 按钮文字与图标一并转白。
+   .motion-toggle[aria-pressed="true"] 原本会把文字染成强调色（青蓝），
+   这里选择器特异性更高（0,4,0 > 0,2,0），直接盖掉。 */
+body:has(.login-shell.is-cinematic) .motion-toggle,
+body:has(.login-shell.is-cinematic) .theme-toggle {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 8, 18, 0.85);
+}
+body:has(.login-shell.is-cinematic) .motion-toggle svg,
+body:has(.login-shell.is-cinematic) .theme-toggle svg {
+  color: #ffffff;
+}
+body:has(.login-shell.is-cinematic) .motion-toggle:hover,
+body:has(.login-shell.is-cinematic) .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.52);
+}
+/* 左侧品牌文案：注册页统一转白。
+   原来 p 用的是 --theme-ink（灰蓝），在会动的深色海景上对比度不够。 */
+.login-shell.is-cinematic .login-story .eyebrow,
+.login-shell.is-cinematic .login-story h1,
+.login-shell.is-cinematic .login-story p {
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.92),
+    0 4px 22px rgba(0, 8, 18, 0.85);
+}
+.login-shell.is-cinematic .login-story p {
+  color: rgba(255, 255, 255, 0.96);
+}
+/* 底部三个标签也一起提白，边框和底衬同步调亮 */
+.login-shell.is-cinematic .login-pill-row span {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
+  text-shadow: 0 1px 2px rgba(0, 8, 18, 0.85);
+}
+/* 注册页统一强化文字阴影：三层叠加——
+   1px 贴边硬影勾轮廓、10px 中距压出局部暗底、28px 大范围拉开与背景的明度差。
+   这条放在所有分元素规则之后，直接统一覆盖它们的 text-shadow。 */
+.login-shell.is-cinematic .login-story .eyebrow,
+.login-shell.is-cinematic .login-story h1,
+.login-shell.is-cinematic .login-story p,
+.login-shell.is-cinematic .login-pill-row span,
+.login-shell.is-cinematic .login-form h2,
+.login-shell.is-cinematic .login-form .eyebrow,
+.login-shell.is-cinematic .login-form .form-intro,
+.login-shell.is-cinematic .login-form label,
+.login-shell.is-cinematic .login-form .login-footnote,
+.login-shell.is-cinematic .login-tabs button {
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.95),
+    0 2px 10px rgba(0, 8, 18, 0.85),
+    0 6px 28px rgba(0, 8, 18, 0.75);
+}
+
+/* 黑夜模式：投影比白天轻一档。
+   洞穴视频本身偏暗，再压重影会把字"糊"成一团，这里只留一圈很薄的贴身暗影。 */
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-story .eyebrow,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-story h1,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-story p,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-pill-row span,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form h2,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form .eyebrow,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form .form-intro,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form label,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form .login-footnote,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-tabs button,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form .btn-primary {
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* 输入框里的文字和占位提示：同样只留薄薄一层 */
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form input,
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-form input::placeholder {
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* 背景视频首帧解码前有一段空窗：给这一页铺深色兜底。
+   否则白天主题下会透出浅色的 body，而这一页的文字是白色的，空窗期等于白屏。 */
+.login-shell.is-cinematic {
+  background: #050e18;
+}
+
+/* ── 背景提亮 ───────────────────────────────────────────
+   这片海底素材本身偏暗（实测 82% 的像素亮度低于 40，中间调只剩 16%），
+   直接用 filter: brightness() 提亮是错的：乘法对纯黑无效，暗部不动，
+   只会把全息环那 1.4% 的高光烧成死白。
+
+   改用 screen 混合叠一层极暗的蓝色底光：
+     out = 1 - (1 - 背景) × (1 - 底光)
+   纯黑被抬到底光的亮度，中间调小幅提升，纯白仍然是纯白 ——
+   实测过曝像素比例从 1.4% 到 1.4%，一格没动，细节完整保留。
+
+   强度只有一个旋钮：--login-lift。0.5 是实测下来"看得出变亮、
+   但海面不会发灰"的位置，觉得还不够可以往 0.6~0.7 调。
+   注册页（.login-bg-video-night）是发光树，本来就亮，排除在外。 */
+.login-shell.is-cinematic:not(:has(> .login-bg-video-night))::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* 在背景视频之上、内容（z-index 1）之下：只提亮画面，不动 UI */
+  background: #0d2436;
+  mix-blend-mode: screen;
+  opacity: var(--login-lift, 0.5);
+  pointer-events: none;
+}
+
+.login-shell > .login-bg-video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 30% center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── 登录页背景层 ─────────────────────────────────────────
+   登录视图：空闲播 login-idle，聚焦输入框后切到 login-cavern
+   注册视图：始终播 cave-tree-loop（不参与空闲切换）
+   只切 opacity，不重新加载；0.6s 交叉淡入淡出。 */
+.login-shell > .login-bg-idle {
+  object-position: center center;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.login-shell > .login-bg-video-login {
+  object-position: center center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.login-shell > .login-bg-video-night {
+  object-position: center center;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+.login-shell[data-engaged="true"] > .login-bg-idle {
+  opacity: 0;
+}
+.login-shell[data-engaged="true"] > .login-bg-video-login {
+  opacity: 1;
+}
+
+/* 原先这里有一层「黑夜模式的深色滤镜」，用径向渐变把注册页的发光树四周压暗。
+   实测它把全屏亮度从 79.2 压到 67.6，而这一页的白字本来就只有 2.5:1 的对比度，
+   压暗并不能改善可读性，只是让画面更闷。已连同 DOM 一起移除，
+   亮度统一交给 screen 提亮层，白字的可读性靠文字描边保证。 */
+
+.login-art > .brand-lockup {
+  pointer-events: none;
+  /* 品牌标识强化：深色背景上更醒目、清晰锐利 */
+  color: #ffffff;
+}
+.login-art > .brand-lockup > span {
+  font-weight: 700;
+  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.login-art > .brand-lockup small {
+  color: rgba(200, 226, 250, 0.85);
+  /* 侧栏为了塞下 48px 图标把副标压到 10px，登录页空间够，保持原来的 11px */
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+@media (min-width: 1200px) {
+  .scene-layer img {
+    object-fit: cover;
+  }
+}
+@media (max-width: 1100px) {
+  .scene-caption {
+    display: none;
+  }
+  .scene-login .scene-caption {
+    display: grid;
+  }
+  .hero-copy {
+    max-width: 70%;
+  }
+}
+@media (max-width: 767px) {
+  .motion-toggle {
+    padding: 0;
+    min-width: 36px;
+  }
+  .motion-toggle > span,
+  .theme-track {
+    display: none;
+  }
+  .header-status {
+    gap: 5px;
+  }
+  .theme-toggle {
+    min-width: 36px;
+    padding: 0 8px;
+  }
+  .header-status > span:not(.header-divider) {
+    display: none;
+  }
+  .workspace-hero {
+    min-height: 420px;
+  }
+  .hero-copy {
+    max-width: 100%;
+    padding: 30px 24px 80px;
+  }
+  .scene-viewport {
+    inset: 0;
+    opacity: 0.45;
+  }
+.scene-layer img {
+    object-position: 67% 50%;
+  }
+  .scene-caption {
+    left: 22px;
+    display: grid;
+  }
+  .scene-caption small {
+    display: none;
+  }
+  .scene-dots {
+    left: 0;
+  }
+  .login-theme {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+}
+[data-motion="off"] .page-stage,
+[data-motion="off"] .btn::after,
+[data-motion="off"] .tool-card::after {
+  animation: none;
+}
+[data-motion="off"] .btn,
+[data-motion="off"] .tool-card,
+[data-motion="off"] .nav-item,
+[data-motion="off"] .theme-track i,
+[data-motion="off"] .scene-dot span,
+[data-motion="off"] .btn > svg,
+[data-motion="off"] .tool-card-bottom > svg,
+[data-motion="off"] .knowledge-shortcut {
+  transition: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .page-stage {
+    transform: none;
+  }
+}
+@media (max-width: 767px) {
+  .login-art {
+    min-height: 310px;
+  }
+  .login-story {
+    bottom: 78px;
+  }
+  .scene-login .scene-viewport {
+    inset: 0;
+    opacity: 0.5;
+  }
+}
+[data-motion="off"][data-theme="light"] .theme-track i {
+  transform: translateX(14px);
+}
+@media (max-width: 767px) {
+  .scene-caption strong {
+    display: none;
+  }
+  .motion-toggle,
+  .theme-toggle {
+    min-width: 44px;
+  }
+}
+.page-content {
+  overflow-x: clip;
+}
+
+
+/* 账号下拉：从实心深蓝改成毛玻璃，和登录页其它控件统一语言 */
+.login-shell.is-cinematic .account-toggle {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border: none;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.38),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.18),
+    0 2px 10px rgba(0, 12, 24, 0.28);
+  -webkit-backdrop-filter: blur(12px) saturate(1.25);
+  backdrop-filter: blur(12px) saturate(1.25);
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.login-shell.is-cinematic .account-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.18),
+    0 3px 14px rgba(0, 12, 24, 0.34);
+}
+.login-shell.is-cinematic .account-toggle svg {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 账号列表项：从白色实心卡改成透明玻璃，和登录页其它控件统一 */
+.login-shell.is-cinematic .login-account-chip {
+  border: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.38),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.16),
+    0 2px 10px rgba(0, 12, 24, 0.24);
+  -webkit-backdrop-filter: blur(12px) saturate(1.25);
+  backdrop-filter: blur(12px) saturate(1.25);
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+.login-shell.is-cinematic .login-account-chip:hover {
+  background: rgba(255, 255, 255, 0.19);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.46),
+    inset 0 1px 1px rgba(255, 255, 255, 0.46),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.16),
+    0 3px 14px rgba(0, 12, 24, 0.3);
+}
+/* 序号方块：同样是玻璃，白字 */
+.login-shell.is-cinematic .login-account-chip .avatar-small {
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.login-shell.is-cinematic .login-account-main strong {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.login-shell.is-cinematic .login-account-main small {
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+.login-shell.is-cinematic .account-delete {
+  color: rgba(255, 255, 255, 0.8);
+}
+.login-shell.is-cinematic .account-delete:hover {
+  color: #ff8a8a;
+  background: rgba(255, 90, 90, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255, 140, 140, 0.4);
+}
+
+/* 登录页辅助文字统一转白：忘记密码 / 底部说明 / 版本号 */
+.login-shell.is-cinematic .login-forgot {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.login-shell.is-cinematic .login-forgot:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+.login-shell.is-cinematic .login-form .login-footnote {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.login-shell.is-cinematic .login-version {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* 登录页左上的标识语句：英文小标 + 大标题 + 说明 + 功能标签，
+   版式与注册页的 .login-story 同源（短光条 → eyebrow → 两行大标 → 副标 → 玻璃标签），
+   内容换成登录场景，避免两个视图说同一句话。 */
+.login-shell .login-slogan {
+  position: absolute;
+  left: 44px;
+  top: clamp(96px, 12.5vh, 148px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 720px;
+  pointer-events: none;
+}
+/* eyebrow 前的短横光条（登录页 / 注册页共用）：
+   登录页原来是竖条，改成横条以贴合「小标 + 大标」的层级；注册页直接复用同一根。 */
+.login-shell .login-slogan-row,
+.login-shell .login-story-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.login-shell .eyebrow-rule {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(150, 236, 255, 0.95) 0%,
+    rgba(120, 200, 255, 0.32) 62%,
+    rgba(120, 200, 255, 0) 100%
+  );
+  box-shadow: 0 0 12px rgba(110, 210, 255, 0.5);
+  animation: slogan-breathe 5.5s ease-in-out infinite;
+}
+@keyframes slogan-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+[data-motion="off"] .login-shell .eyebrow-rule {
+  animation: none;
+}
+/* 两页的小标字体统一：等宽 + 宽字距，靠字距而不是字号拉开"标签感" */
+.login-shell .login-slogan-eyebrow,
+.login-shell .login-story .eyebrow {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.24em;
+}
+.login-shell .login-slogan-eyebrow {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 2px 12px rgba(0, 8, 18, 0.8);
+}
+/* 注册页小标压在会发光的树根上，普通投影在亮部会被吃掉，
+   补一层暗色外发光把字从画面里"挖"出来（不改颜色以外的任何东西）。 */
+.login-shell.is-cinematic .login-story .eyebrow {
+  color: #ffffff;
+  text-shadow:
+    0 1px 3px rgba(0, 6, 14, 0.92),
+    0 0 14px rgba(0, 6, 14, 0.85),
+    0 0 26px rgba(0, 6, 14, 0.55);
+}
+:root:not([data-theme="light"]) .login-shell.is-cinematic .login-story .eyebrow {
+  text-shadow:
+    0 1px 3px rgba(0, 6, 14, 0.92),
+    0 0 14px rgba(0, 6, 14, 0.85),
+    0 0 26px rgba(0, 6, 14, 0.55);
+}
+/* 主标题：两行，字重和字号都要压得住画面，行高收紧才有「一整块」的分量 */
+.login-shell .login-slogan h1 {
+  margin: 22px 0 0;
+  font-size: clamp(28px, 2.95vw, 50px);
+  line-height: 1.38;
+  letter-spacing: 0.03em;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.92),
+    0 4px 22px rgba(0, 8, 18, 0.85),
+    0 10px 44px rgba(0, 8, 18, 0.6),
+    0 0 42px rgba(132, 200, 255, 0.16);
+}
+.login-shell .login-slogan-sub {
+  margin: 24px 0 0;
+  font-size: clamp(15px, 1.15vw, 19px);
+  line-height: 1.8;
+  letter-spacing: 0.1em;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow:
+    0 1px 2px rgba(0, 8, 18, 0.9),
+    0 2px 14px rgba(0, 8, 18, 0.78);
+}
+/* 三个功能标签：与表单控件同一套玻璃参数（低不透明度 + 模糊 + 细白边） */
+.login-shell .login-slogan-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 34px;
+}
+.login-shell .login-slogan-pills span {
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: clamp(13px, 0.85vw, 15px);
+  letter-spacing: 0.06em;
+  -webkit-backdrop-filter: blur(10px) saturate(1.3);
+  backdrop-filter: blur(10px) saturate(1.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 10px rgba(0, 12, 24, 0.25);
+  text-shadow: 0 1px 2px rgba(0, 8, 18, 0.85);
+}
+/* 黑夜模式投影收一档：洞窟画面本身偏暗，重影会把字糊成一团 */
+:root:not([data-theme="light"]) .login-shell .login-slogan-eyebrow,
+:root:not([data-theme="light"]) .login-shell .login-slogan h1,
+:root:not([data-theme="light"]) .login-shell .login-slogan-sub,
+:root:not([data-theme="light"]) .login-shell .login-slogan-pills span {
+  text-shadow:
+    0 0 1px rgba(0, 0, 0, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+}
+@media (max-width: 1180px) {
+  .login-shell .login-slogan h1 {
+    font-size: 30px;
+  }
+  .login-shell .login-slogan-sub {
+    font-size: 14px;
+  }
+  .login-shell .login-slogan-pills span {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}
+@media (max-width: 980px) {
+  .login-shell .login-slogan {
+    display: none;
+  }
+}
+
+/* ── 登录 ⇄ 注册的过场层 ────────────────────────────────
+   满屏视频，靠 mask 从左侧推过去做「水漫过来」的形体。
+   层级放在 .login-theme（z-index 30）之上，水才会把右上角控件盖住。
+   选择器必须写成 `.login-shell > .ocean-transition`（0,2,0）：
+   decoration.css 里的 `.login-shell > *`（0,1,0）在更晚引入，
+   同位权重下会把 position / z-index 一起盖掉，视频就会塌成一块小矩形。 */
+.login-shell > .ocean-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+}

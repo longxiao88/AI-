@@ -1,0 +1,358 @@
+/* 壳层：侧栏 + 画布。数值取自 2026-11-02 00:56 的构建产物，与改造前一致。 */
+
+.app-shell {
+  --sidebar-w:232px;
+  --sidebar-top-h:68px;
+  background:var(--theme-surface,#0a111e);
+  min-height:100dvh;
+  /* 自成一格：把光标光晕（z 0 的固定画布）压在这层下面，
+     否则它会画在页面底板之上、把海水盖成一块深色 */
+  position:relative;
+  z-index:1
+}
+.app-sidebar {
+  width:var(--sidebar-w);
+  z-index:20;
+  background:#fffffff2;
+  border-right:1px solid #1c446c29;
+  flex-direction:column;
+  display:flex;
+  position:fixed;
+  inset:0 auto 0 0;
+  overflow:hidden
+}
+:root:not([data-theme=light]) .app-sidebar {
+  background:#09121ef2;
+  border-right-color:#78b4e629
+}
+.sidebar-top {
+  height:var(--sidebar-top-h);
+  border-bottom:1px solid var(--theme-border,#1d2c41);
+  flex-shrink:0;
+  align-items:center;
+  padding:0 20px;
+  display:flex
+}
+.sidebar-top .brand-lockup {
+  /* 48px 图标进来后横向只剩 191px，间距收到 9px 才够放下单行副标 */
+  gap:9px;
+  padding:0
+}
+.app-sidebar nav {
+  overscroll-behavior:contain;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+  flex:1;
+  align-content:start;
+  gap:4px;
+  min-height:0;
+  padding:4px 12px 14px;
+  display:grid;
+  overflow:hidden auto
+}
+.sidebar-bottom {
+  border-top:1px solid var(--theme-border,#1d2c41);
+  flex-shrink:0;
+  gap:10px;
+  padding:14px 18px 18px;
+  display:grid
+}
+.app-sidebar nav::-webkit-scrollbar {
+  width:0;
+  height:0;
+  display:none
+}
+.sidebar-bottom::-webkit-scrollbar {
+  width:0;
+  height:0;
+  display:none
+}
+.brand-lockup {
+  color:var(--theme-ink,#dceafa);
+  align-items:center;
+  gap:12px;
+  padding:30px 23px;
+  display:flex
+}
+/* 位图品牌标记：图形本身已按主题换成提亮版，这里只补一点冷辉光 */
+.brand-mark {
+  flex-shrink:0;
+  display:block;
+  object-fit:contain;
+  filter:drop-shadow(0 0 6px rgba(111,216,255,.22))
+}
+.brand-lockup>span {
+  font-size:16px;
+  font-weight:650;
+  /* 图标放大到 48px 后侧栏只剩 132px 给文字，允许收缩换行，避免把整块顶出 padding */
+  min-width:0
+}
+.brand-lockup small {
+  color:var(--theme-ink,#778fae);
+  /* 图标放大到 48px 后侧栏只剩 134px，11px 的副标会折成两行，压到 10px 保持单行 */
+  font-size:10px;
+  line-height:1.7;
+  letter-spacing:0;
+  display:block
+}
+.nav-section-label {
+  color:var(--theme-ink,#627c9c);
+  flex-shrink:0;
+  padding:18px 24px 10px;
+  font-size:11px;
+  line-height:1.7
+}
+.nav-item {
+  width:100%;
+  min-height:46px;
+  color:var(--theme-ink,#9caec6);
+  text-align:left;
+  border:1px solid #0000;
+  border-radius:8px;
+  align-items:center;
+  gap:12px;
+  padding:0 14px;
+  font-size:13px;
+  display:flex
+}
+.nav-item:hover {
+  background:var(--theme-surface,#132137);
+  color:var(--theme-ink,#dceafa)
+}
+.nav-item.is-active {
+  background:var(--theme-surface,#142d42);
+  border-color:var(--theme-border,#24516a);
+  color:var(--theme-ink,#a5e5fb)
+}
+.nav-break {
+  margin-top:18px
+}
+.system-note {
+  color:var(--theme-ink,#b3c6dd);
+  min-width:0;
+  font-size:11px
+}
+.system-note .status-dot {
+  margin-right:8px
+}
+.system-note p {
+  color:var(--theme-ink,#778ea9);
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin:5px 0 0;
+  font-size:11px;
+  overflow:hidden
+}
+.sidebar-user {
+  text-align:left;
+  border:1px solid #0000;
+  border-radius:10px;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  padding:5px 8px 5px 6px;
+  display:flex
+}
+.sidebar-user-text {
+  flex:1;
+  min-width:0
+}
+.sidebar-user strong {
+  color:var(--theme-ink,#dbe9f8);
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:100%;
+  font-size:13px;
+  font-weight:650;
+  display:block;
+  overflow:hidden
+}
+.sidebar-user small {
+  color:var(--muted);
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:100%;
+  margin-top:3px;
+  font-size:10px;
+  display:block;
+  overflow:hidden
+}
+.sidebar-user>svg {
+  color:var(--theme-ink,#6e89a5);
+  flex-shrink:0;
+  transition:transform .18s ease-out
+}
+@media(hover:hover)and (pointer:fine) {
+  .sidebar-user:hover:not(:disabled) {
+  border-color:var(--frame-edge);
+  background:var(--accent)
+}
+@supports (color:color-mix(in lab,red,red)) {
+  .sidebar-user:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--accent) 9%,transparent)
+}
+}
+.sidebar-user:hover:not(:disabled)>svg {
+  transform:translate(2px,-2px)
+}
+}
+.sidebar-user:disabled {
+  opacity:.6
+}
+.avatar-small {
+  border:1px solid var(--theme-border,#34516c);
+  background:var(--theme-surface,#173248);
+  width:32px;
+  height:32px;
+  color:var(--theme-ink,#b7e4f7);
+  text-transform:uppercase;
+  border-radius:9px;
+  flex-shrink:0;
+  justify-content:center;
+  align-items:center;
+  font-size:12px;
+  display:flex
+}
+.sidebar-bottom .avatar-small {
+  background:var(--theme-surface,#173248);
+  background:var(--accent);
+  border-radius:10px;
+  width:34px;
+  height:34px;
+  font-size:13px;
+  font-weight:650
+}
+@supports (color:color-mix(in lab,red,red)) {
+  .sidebar-bottom .avatar-small {
+  background:color-mix(in srgb,var(--accent) 16%,transparent)
+}
+}
+.sidebar-bottom .avatar-small {
+  border-color:var(--theme-border,#34516c);
+  border-color:var(--accent)
+}
+@supports (color:color-mix(in lab,red,red)) {
+  .sidebar-bottom .avatar-small {
+  border-color:color-mix(in srgb,var(--accent) 42%,transparent)
+}
+}
+.sidebar-bottom .avatar-small {
+  color:var(--theme-ink,#dff0fb)
+}
+.logout {
+  width:100%;
+  color:var(--theme-ink,#a8bdd4);
+  border:1px solid var(--line);
+  border-radius:9px;
+  flex-shrink:0;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+  min-height:36px;
+  padding:0 14px;
+  font-size:12px;
+  transition:color .16s ease-out,border-color .16s ease-out,background .16s ease-out;
+  display:flex
+}
+@media(hover:hover)and (pointer:fine) {
+  .logout:hover:not(:disabled) {
+  color:var(--accent);
+  border-color:var(--frame-edge);
+  background:var(--accent)
+}
+@supports (color:color-mix(in lab,red,red)) {
+  .logout:hover:not(:disabled) {
+  background:color-mix(in srgb,var(--accent) 10%,transparent)
+}
+}
+}
+.logout:disabled {
+  opacity:.55
+}
+.app-main {
+  margin-left:var(--sidebar-w);
+  min-width:0
+}
+.app-header {
+  z-index:22;
+  border-bottom:1px solid var(--theme-border,#1d2c41);
+  background:var(--theme-surface,#0c1524);
+  min-height:68px;
+  color:var(--theme-ink,#7f96b1);
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:0 32px;
+  font-size:12px;
+  display:flex;
+  /* 吸顶：长页面（设置、文档分析、资源库）滚动时，面包屑和右上角的
+     语言 / 主题 / 时间开关要一直够得着，否则得滚回顶部才能操作。
+     内容从这一栏下面穿过是吸顶的正常表现，靠不透明底色加下边框分层。
+     背景必须是实色，半透明会让下方文字透出来。 */
+  position:sticky;
+  top:0;
+  /* 吸顶栏属于真正的浮层，给一层极淡的投影把内容压在下面；
+     浅色主题下白底叠白底，只靠下边框分不开。 */
+  box-shadow:0 2px 8px rgba(20,50,80,.06);
+}
+:root:not([data-theme=light]) .app-header {
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+.app-header .crumbs {
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  min-width:0;
+  overflow:hidden
+}
+.app-header strong {
+  color:var(--theme-ink,#d2e0f1);
+  font-weight:500
+}
+.breadcrumb-slash {
+  color:var(--theme-ink,#3e536e);
+  margin:0 12px
+}
+.header-status {
+  color:var(--theme-ink,#a0b4ca);
+  flex-shrink:0;
+  align-items:center;
+  gap:17px;
+  font-size:11.5px;
+  display:flex
+}
+.header-status .live-time {
+  font-variant-numeric:tabular-nums
+}
+.header-divider {
+  background:var(--line);
+  width:1px;
+  height:14px
+}
+.page-content {
+  max-width:1600px;
+  margin:auto;
+  padding:25px 32px 30px
+}
+.preview-note {
+  color:var(--theme-ink,#98b9d0);
+  align-items:center;
+  gap:9px;
+  margin-bottom:22px;
+  font-size:11px;
+  line-height:1.8;
+  display:flex
+}
+.page-heading {
+  align-items:baseline;
+  margin-bottom:20px;
+  display:flex
+}
+.page-heading h1 {
+  margin:0;
+  font-size:24px;
+  font-weight:650;
+  line-height:1.25;
+  letter-spacing:-.01em
+}
